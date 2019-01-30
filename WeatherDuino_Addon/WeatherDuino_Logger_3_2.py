@@ -11,7 +11,7 @@ import sys
 from sendmail import sendmail
 
 #For use with raspberry pi plese change to your absolute paths
-HeaderName = "/home/pi/WeatherDuino/Transmission_Layout_v10_1.csv"
+HeaderName = "/home/pi/WeatherDuino/Transmission_Layout_v10_2.csv"
 Logfile = "/home/pi/WeatherDuino/Weatherduino.txt"
 WeeWxFile= "/home/pi/WeatherDuino/WeeWx_Exp.txt"
 ErrorLog = "/home/pi/WeatherDuino/Weatherduino_Errors.txt"
@@ -594,9 +594,18 @@ try:
                                                                         export.write(str(expunits[i]) + '\n')
                                                                 else:
                                                                         export.write(str(expunits[i]) + ';')
-                                                                        
-                                                        #Walk through all signals
-                                                        for i in range(len(expnames)+1):
+
+                                                        #convert signals to US units if necessary to ensure correct encoding in WeeWx
+                                                        for i in range (len(expunits)):
+                                                                #First check temperatures and convert to degree Farenheit
+                                                                if expunits[i] == 'group_temperature':
+                                                                        exp_signals[i+1] = 1.8*exp_signals[i+1]+32
+
+
+
+                                                        #Walk through all signals and write them to the export file
+                                                        for i in range(len(expnames)+1):    
+                                                                #write to file
                                                                 #if last column is reached write signal with end of line delimiter
                                                                 if i == len(expnames):
                                                                         export.write(str(exp_signals[i]) + '\n')

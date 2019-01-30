@@ -21,7 +21,6 @@ for n in range(len(names)-1):
         weewx.units.obs_group_dict[str(names[n+1])] = str(unit_groups[n+1])
     
 #Define unit groups which are not already defined
-#if snow height is given in cm
 weewx.units.USUnits['group_snow_height'] = 'inch1'
 weewx.units.MetricUnits['group_snow_height'] = 'cm1'
 weewx.units.MetricWXUnits['group_snow_height'] = 'cm1'
@@ -31,34 +30,6 @@ weewx.units.default_unit_format_dict['cm1']  = '%.0f'
 weewx.units.default_unit_label_dict['cm1']  = ' cm'
 weewx.units.conversionDict['inch1']  = {'cm1': lambda x : x * 2.54}
 weewx.units.conversionDict['cm1']  = {'inch1': lambda x : x * 0.394}
-
-#if snow height is given in dm
-weewx.units.USUnits['group_snow_height2'] = 'inch2'
-weewx.units.MetricUnits['group_snow_height2'] = 'dm2'
-weewx.units.MetricWXUnits['group_snow_height2'] = 'dm2'
-weewx.units.default_unit_format_dict['inch2']  = '%.0f'
-weewx.units.default_unit_format_dict['cm2']  = '%.0f'
-weewx.units.default_unit_label_dict['inch2']  = ' in'
-weewx.units.default_unit_format_dict['dm2']  = '%.1f'
-weewx.units.default_unit_label_dict['dm2']  = ' dm'
-weewx.units.default_unit_label_dict['cm2']  = ' cm'
-weewx.units.conversionDict['inch2']  = {'dm2': lambda x : x * 0.254}
-weewx.units.conversionDict['dm2']  = {'inch2': lambda x : x * 3.94}
-weewx.units.conversionDict['cm2']  = {'dm2': lambda x : x * 10}
-weewx.units.conversionDict['dm2']  = {'cm2': lambda x : x * 0.1}
-
-#group temperature2
-#Conversion from Farenheit to deg Celsius does not work at the moment. So only deg Celsius is supported
-weewx.units.USUnits['group_temperature2'] = 'degC2'
-weewx.units.MetricUnits['group_temperature2'] = 'degC2'
-weewx.units.MetricWXUnits['group_temperature2'] = 'degC2'
-#weewx.units.default_unit_format_dict['degFa2']  = '%.1f'
-#weewx.units.default_unit_label_dict['degFa2']  = ' \xc2\xb0F'
-weewx.units.default_unit_format_dict['degC2']  = '%.1f'
-weewx.units.default_unit_label_dict['degC2']  = ' \xc2\xb0C'
-#weewx.units.conversionDict['degC2']  = {'degFa2': lambda x : (x - 31) / 1.8}
-#weewx.units.conversionDict['degFa2']  = {'degC2': lambda x : (x * 1.8) + 32}
-
 
 weewx.units.USUnits['group_gas_concentration'] = 'ppm'
 weewx.units.MetricUnits['group_gas_concentration'] = 'ppm'
