@@ -556,6 +556,10 @@ try:
                                         try:
                                                 #Walk through all columns
                                                 for i in range(len(lognames)):
+                                                        #Check if signal vector contains None to make an empty string out of it
+                                                        if signals[i] is None:
+                                                                signals[i] = ''
+                                                        
                                                         #if last column is reached write signal with end of line delimiter
                                                         if i == len(lognames)-1:
                                                                 output.write(str(signals[i]) +'\n')
