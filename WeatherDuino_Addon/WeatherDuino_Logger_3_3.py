@@ -600,7 +600,12 @@ try:
                                                                 #First check temperatures and convert to degree Farenheit
                                                                 if expunits[i] == 'group_temperature':
                                                                         exp_signals[i+1] = 1.8*exp_signals[i+1]+32
-
+                                                                if expunits[i] == 'group_length':
+                                                                        exp_signals[i+1] = exp_signals[i+1]/2.54
+                                                                if expunits[i] == 'group_pressure':
+                                                                        exp_signals[i+1] = exp_signals[i+1]/33.864    
+                                                                if expunits[i] == 'group_speed':
+                                                                        exp_signals[i+1] = exp_signals[i+1]/1.609
 
 
                                                         #Walk through all signals and write them to the export file
