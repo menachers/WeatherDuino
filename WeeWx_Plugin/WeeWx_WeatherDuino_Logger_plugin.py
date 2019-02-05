@@ -20,17 +20,6 @@ for n in range(len(names)-1):
     if str(unit_groups[n+1]) != 'none':
         weewx.units.obs_group_dict[str(names[n+1])] = str(unit_groups[n+1])
     
-#Define unit groups which are not already defined
-weewx.units.USUnits['group_snow_height'] = 'inch1'
-weewx.units.MetricUnits['group_snow_height'] = 'cm1'
-weewx.units.MetricWXUnits['group_snow_height'] = 'cm1'
-weewx.units.default_unit_format_dict['inch1']  = '%.0f'
-weewx.units.default_unit_label_dict['inch1']  = ' in'
-weewx.units.default_unit_format_dict['cm1']  = '%.0f'
-weewx.units.default_unit_label_dict['cm1']  = ' cm'
-weewx.units.conversionDict['inch1']  = {'cm1': lambda x : x * 2.54}
-weewx.units.conversionDict['cm1']  = {'inch1': lambda x : x * 0.394}
-
 weewx.units.USUnits['group_gas_concentration'] = 'ppm'
 weewx.units.MetricUnits['group_gas_concentration'] = 'ppm'
 weewx.units.MetricWXUnits['group_gas_concentration'] = 'ppm'

@@ -11,7 +11,7 @@ import sys
 from sendmail import sendmail
 
 #For use with raspberry pi plese change to your absolute paths
-HeaderName = "/home/pi/WeatherDuino/Transmission_Layout_v10_2.csv"
+HeaderName = "/home/pi/WeatherDuino/Transmission_Layout.csv"
 Logfile = "/home/pi/WeatherDuino/Weatherduino.txt"
 WeeWxFile= "/home/pi/WeatherDuino/WeeWx_Exp.txt"
 ErrorLog = "/home/pi/WeatherDuino/Weatherduino_Errors.txt"
@@ -29,6 +29,9 @@ EnableErrorLog = 1
 EnableMail = 1
 #Enables WeeWx Export
 EnableWeeWx = 1
+
+#Time in sec after the last succesful logging event the extra data collector is executed
+CollectDelay = 40
 
 #
 # declaration of the default mail settings
@@ -58,8 +61,10 @@ usetls = True
 timebuffer = datetime.now()
 mailSent = 0
 
-print "WeatherDuino data reveicer and logger"
-print "Version 3.1"
+CollectorExecuted = 0
+
+print "WeatherDuino data reveiving and logging script"
+print "Version 3.3"
 print "Logfile name: ", Logfile
 print "Used layout file: ", HeaderName
 if EnableErrorLog == 1:
@@ -85,6 +90,8 @@ except:
         sys.exit(1)
 structformat = list()
 variableLength = list()
+ExtraImportVar = 0
+ExtraCalcVar = 0
 
 print "Start layout file conversion"
 #Iterate through all lines of the layout file
@@ -101,7 +108,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                                 RcvCnt = x+1
                                 print "Waiting for " + str(RcvCnt) + " elements from the WeatherDuino logger."
                 ExtDataCnt = len(names)-(RcvCnt)
-                print "Number of extra signals expected is " + str(ExtDataCnt)+ "."
+                print "Number of expected extra signals is " + str(ExtDataCnt)+ "."
 
         #Then get the alias names
         if headerrun == 2:
@@ -121,11 +128,6 @@ for headerrun,headerline in enumerate(header.readlines()):
                 loginfo = headerline.strip().split(";");
                 #Delete first column
                 del loginfo[0]
-                #Check if some of the extra signals should be logged
-                for x in range(RcvCnt, len(names)):
-                        #If yes, raise a flag to know it in the logging state
-                        if loginfo[x] == '1':
-                                LogExtraData = 1
 
         #Get the WeeWx alias names
         if headerrun == 4:
@@ -143,11 +145,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                 exportinfo = headerline.strip().split(";");
                 #Delete first column
                 del exportinfo[0]
-                #Check if some of the extra signals should be exported to WeeWx
-                for x in range(RcvCnt, len(names)):
-                        #If yes, raise a flag to know it in the logging state
-                        if exportinfo[x] == '1':
-                                ExportExtraData = 1
+
         #Get the unit group info for WeeWx
         if headerrun == 6:
                 exportunitinfo = headerline.strip().split(";");
@@ -160,33 +158,42 @@ for headerrun,headerline in enumerate(header.readlines()):
                 vartype = headerline.strip().split(";");
                 #Remove first element since it is 
                 del vartype[0]
-                for x in range(RcvCnt):
-                    if vartype[x] == 'uint32_t':
-                        structformat.append("L")
-                        variableLength.append(4)
-                    elif vartype[x] == 'uint16_t':
-                        structformat.append("H")
-                        variableLength.append(2)
-                    elif vartype[x] == 'int16_t':
-                        structformat.append("h")
-                        variableLength.append(2)
-                    elif vartype[x] == 'float':
-                        structformat.append("f")
-                        variableLength.append(4)
-                    elif vartype[x] == 'byte':
-                        structformat.append("b")
-                        variableLength.append(1)
-                    elif vartype[x] == 'uint8_t':
-                        structformat.append("B")
-                        variableLength.append(1)
-                    else:
-                        print "Warning vartype " + '"'+ str(vartype[x]) + '"' +" in column " + str(x+1) + " can not be parsed!"
-                        if EnableErrorLog == 1:
-                                with open(ErrorLog,'a') as err:
-                                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Warning vartype " + '"'+ str(vartype[x]) + '"' +" in column " + str(x+1) + " can not be parsed!\n")
-                    #print str(vartype[x]) + ' ' + str(variableLength[x])
-                bytesum = sum(variableLength)
-                print("Sum of all expected bytes from the WeatherDuino logger: " + str(bytesum))
+                for x in range(len(names)):
+                        if x < RcvCnt:
+                                if vartype[x] == 'uint32_t':
+                                        structformat.append("L")
+                                        variableLength.append(4)
+                                elif vartype[x] == 'uint16_t':
+                                        structformat.append("H")
+                                        variableLength.append(2)
+                                elif vartype[x] == 'int16_t':
+                                        structformat.append("h")
+                                        variableLength.append(2)
+                                elif vartype[x] == 'float':
+                                        structformat.append("f")
+                                        variableLength.append(4)
+                                elif vartype[x] == 'byte':
+                                        structformat.append("b")
+                                        variableLength.append(1)
+                                elif vartype[x] == 'uint8_t':
+                                        structformat.append("B")
+                                        variableLength.append(1)
+                                else:
+                                        print "Warning vartype " + '"'+ str(vartype[x]) + '"' +" in column " + str(x+1) + " can not be parsed!"
+                                        if EnableErrorLog == 1:
+                                                with open(ErrorLog,'a') as err:
+                                                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Warning vartype " + '"'+ str(vartype[x]) + '"' +" in column " + str(x+1) + " can not be parsed!\n")
+                                            #print str(vartype[x]) + ' ' + str(variableLength[x])
+                        bytesum = sum(variableLength)
+                        print("Sum of all expected bytes from the WeatherDuino logger: " + str(bytesum))
+                        else:
+                                if vartype[x] == 'calc':
+                                        ExtraCalcVar = ExtraCalcVar + 1
+                                if vartype[x] == 'import':
+                                        ExtraImportVar = ExtraImportVar + 1
+        ###++++++++++++++++++++++++++++++++++++++#######################################
+        ### Plausicheck + Error Handling + Print############
+        ################################################################################
         
         #read scaling factors of all signals
         if headerrun == 8:
@@ -210,10 +217,15 @@ for headerrun,headerline in enumerate(header.readlines()):
 #Close header file
 header.close()
 
+#Check for signal which needs extra treatment such as calculation values and extra collected data
+
+
 #Check signal names which have to be logged and store how many signals should be received originally
 CompSignalCount = RcvCnt
 #print len(names)
 #print len(loginfo)
+
+#Generate empty lists
 lognames = []
 logunits = []
 logfactors = []
@@ -393,6 +405,8 @@ try:
                                         if mailSent == 0:
                                                 try:
 						# call sendmail() and generate a new mail with specified subject and content
+                                                        if EnableDebug == 1:
+                                                                print "Sending Email."
                                                         sendmail(str(receiver),'Wetterstation error',str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) + ' No data is logged since 10 minutes')
                                                         if EnableErrorLog == 1:
                                                                 with open(ErrorLog,'a') as err:
@@ -403,8 +417,9 @@ try:
                                                                 with open(ErrorLog,'a') as err:
                                                                         err.write (str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) +" Mail could not be sent. \n")
                                                                         mailSent = 1
-                                         #else:
-                                                 #print "Mail already sent."
+                                         else:
+                                                if EnableDebug == 1:
+                                                        print "Mail already sent."
                         except:
                                 #Something has gone wrong probably at receiving data
                                 if EnableDebug == 1:
@@ -430,8 +445,15 @@ try:
 
 
 
+                        ###This part is only executed once in a waiting sequence after a specified time (CollectDelay) when the last logging has ended
+                        if (datetime.now()-timebuffer) > timedelta(seconds=CollectDelay) and CollectorExecuted == 0:
+                                
+
+
 
                         ###End of User Space++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++###
+                                CollectorExecuted = 1
+                        
                         #Check if data in list is valid
                         if len(extraData) != ExtDataCnt:
                                 if EnableDebug == 1:
@@ -567,9 +589,10 @@ try:
                                                         else:
                                                                 if i>=0:
                                                                         output.write(str(signals[i]) + ';')
-									#Write time of last successfull log entry in buffer
+									#Write time of last successfull log entry in buffer and reset flags
                                                                         timebuffer = datetime.now()
-                                                                        mailSent = 1
+                                                                        mailSent = 0
+                                                                        CollectorExecuted = 0
 
                                         except:
                                                 #If writing with open logfile is not possible strange things are happening and the layout file might be wrong.
