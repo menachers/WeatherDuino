@@ -12,7 +12,7 @@ from sendmail import sendmail
 
 #For use with raspberry pi plese change to your absolute paths
 HeaderName = "/home/pi/WeatherDuino/Transmission_Layout.csv"
-Logfile = "/home/pi/WeatherDuino/Weatherduino.txt"
+Logfile = "/home/pi/WeatherDuino/Weatherduinotest.txt"
 WeeWxFile= "/home/pi/WeatherDuino/WeeWx_Exp.txt"
 ErrorLog = "/home/pi/WeatherDuino/Weatherduino_Errors.txt"
 SerialPort = '/dev/serial0'
@@ -31,7 +31,7 @@ EnableMail = 1
 EnableWeeWx = 1
 
 #Time in sec after the last succesful logging event the extra data collector is executed
-CollectDelay = 40
+CollectDelay = 10
 
 #
 # declaration of the default mail settings
@@ -92,6 +92,8 @@ structformat = list()
 variableLength = list()
 ExtraImportVar = 0
 ExtraCalcVar = 0
+CheckVar = 0
+extraData = list()
 
 print "Start layout file conversion"
 #Iterate through all lines of the layout file
@@ -108,7 +110,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                                 RcvCnt = x+1
                                 print "Waiting for " + str(RcvCnt) + " elements from the WeatherDuino logger."
                 ExtDataCnt = len(names)-(RcvCnt)
-                print "Number of expected extra signals is " + str(ExtDataCnt)+ "."
+                print "Number of other expected signals is " + str(ExtDataCnt)+ "."
 
         #Then get the alias names
         if headerrun == 2:
@@ -184,28 +186,30 @@ for headerrun,headerline in enumerate(header.readlines()):
                                                 with open(ErrorLog,'a') as err:
                                                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Warning vartype " + '"'+ str(vartype[x]) + '"' +" in column " + str(x+1) + " can not be parsed!\n")
                                             #print str(vartype[x]) + ' ' + str(variableLength[x])
-                        bytesum = sum(variableLength)
-                        print("Sum of all expected bytes from the WeatherDuino logger: " + str(bytesum))
                         #Parse extra import and calculation variables 
                         else:
                                 if vartype[x] == 'calc':
                                         ExtraCalcVar = ExtraCalcVar + 1
-                                else if vartype[x] == 'import':
+                                elif vartype[x] == 'import':
                                         ExtraImportVar = ExtraImportVar + 1
                                 else:
                                         if EnableDebug == 1:                                
                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Unknown type detected in calc or import variables."
+
+                #Check if everything has been successfully       
+                bytesum = sum(variableLength)
+                print("Sum of all expected bytes from the WeatherDuino logger: " + str(bytesum))
+                
                 if (ExtraCalcVar + ExtraImportVar + RcvCnt == len(names)):
                         if EnableDebug == 1:                                
                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Variables parsed and checked sucessfully."
-                        print("Extra data: " + str(ExtraImportVar) + " Calculation variables: " + str(ExtraCalcVar))
+                        print("Extra signals: " + str(ExtraImportVar) + " Calculated signals: " + str(ExtraCalcVar))
                 else:
                         print("Extra and calculation variables could not be parsed succesfully! Terminating.")
                         if EnableErrorLog == 1:
                                 with open(ErrorLog,'a') as err:
                                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Extra and calculation variables could not be parsed! Terminating.\n")
                         sys.exit(1)
-
 
         
         #read scaling factors of all signals
@@ -430,7 +434,7 @@ try:
                                                                 with open(ErrorLog,'a') as err:
                                                                         err.write (str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) +" Mail could not be sent. \n")
                                                                         mailSent = 1
-                                         else:
+                                        else:
                                                 if EnableDebug == 1:
                                                         print "Mail already sent."
                         except:
@@ -450,7 +454,6 @@ try:
                                 #Start over to state 0 again
                                 state = 0
 
-                        extraData = list()
                         ###+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++###
                         ###Do processing of other sources here and store it into a data vector as you want      ###
                         ###Data must be sorted as defined in the layout file                                    ###
@@ -460,21 +463,23 @@ try:
 
                         ###This part is only executed once in a waiting sequence after a specified time (CollectDelay) when the last logging has ended
                         if (datetime.now()-timebuffer) > timedelta(seconds=CollectDelay) and CollectorExecuted == 0:
-                                
-
+                                extraData = list()
+                                extraData.append(103)
 
 
                         ###End of User Space++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++###
                                 CollectorExecuted = 1
+                                CheckVar = 1
                         
                         #Check if data in list is valid
-                        if len(extraData) != ExtDataCnt:
+                        if len(extraData) != ExtraImportVar and CheckVar == 1:
                                 if EnableDebug == 1:
-                                        print "Warning: Signal count of extra data defined in layout file and actual signal list are not fitting."
-                                        print "Defined signals are " + str(ExtDataCnt) + "! Legth of the signal list is "+ str(len(extraData)) + "!"
+                                        print "Warning: Signal count of extra data defined in layout file and actual signal list are not matching."
+                                        print "Defined signals are " + str(ExtraImportVar) + "! Legth of the signal list is "+ str(len(extraData)) + "!"
                                 if EnableErrorLog == 1:
                                         with open(ErrorLog,'a') as err:
                                                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Number of extra signals received and extra signals defined does not match.\n")
+                                CheckVar = 0
                                 
 
                                                                 
