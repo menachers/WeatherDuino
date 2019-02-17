@@ -186,14 +186,27 @@ for headerrun,headerline in enumerate(header.readlines()):
                                             #print str(vartype[x]) + ' ' + str(variableLength[x])
                         bytesum = sum(variableLength)
                         print("Sum of all expected bytes from the WeatherDuino logger: " + str(bytesum))
+                        #Parse extra import and calculation variables 
                         else:
                                 if vartype[x] == 'calc':
                                         ExtraCalcVar = ExtraCalcVar + 1
-                                if vartype[x] == 'import':
+                                else if vartype[x] == 'import':
                                         ExtraImportVar = ExtraImportVar + 1
-        ###++++++++++++++++++++++++++++++++++++++#######################################
-        ### Plausicheck + Error Handling + Print############
-        ################################################################################
+                                else:
+                                        if EnableDebug == 1:                                
+                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Unknown type detected in calc or import variables."
+                if (ExtraCalcVar + ExtraImportVar + RcvCnt == len(names)):
+                        if EnableDebug == 1:                                
+                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Variables parsed and checked sucessfully."
+                        print("Extra data: " + str(ExtraImportVar) + " Calculation variables: " + str(ExtraCalcVar))
+                else:
+                        print("Extra and calculation variables could not be parsed succesfully! Terminating.")
+                        if EnableErrorLog == 1:
+                                with open(ErrorLog,'a') as err:
+                                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Extra and calculation variables could not be parsed! Terminating.\n")
+                        sys.exit(1)
+
+
         
         #read scaling factors of all signals
         if headerrun == 8:
