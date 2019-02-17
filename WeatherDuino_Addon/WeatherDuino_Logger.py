@@ -519,19 +519,53 @@ try:
                                 #print 'Unix time :' + str(struct.unpack("L", ''.join(data[0:4]))[0])
                                 #print 'Datetime UTC:' + str(datetime.fromtimestamp(int(struct.unpack("L", ''.join(data[0:4]))[0]), tz=pytz.UTC).strftime('%Y-%m-%d %H:%M:%S'))
 
-                                #Now handle all the extra signals received
+                                #Handle calculation variables
+                                #++++++++++++++Parser has to be implemented here+++++++++++++++++#
+                                if ExtraCalcVar > 0:
+                                        ExtraCalc = list()
+                                        ExtraCalc.append((signals[4]/signals[18])*100)
+
+                                #Now merge all the extra signals received
                                 if ExtDataCnt > 0:
+                                        ImportInd = 0
+                                        CalcInd = 0
                                         for x in range(CompSignalCount, len(names)):
-                                                if loginfo[x] == '1':
-                                                        try:
-                                                                signals.append(round(float(extraData[x-CompSignalCount])/float(factors[x]),2))
-                                                        except:
-                                                                signals.append(None)
-                                                if exportinfo[x] == '1':
-                                                        try:
-                                                                exp_signals.append(round(float(extraData[x-CompSignalCount])/float(factors[x]),2))
-                                                        except:
-                                                                exp_signals.append(None)
+                                                #Handle signals of type import
+                                                if vartype[x] == 'import':
+                                                        if loginfo[x] == '1':
+                                                                try:
+                                                                        signals.append(round(float(extraData[ImportInd])/float(factors[x]),2))
+                                                                except:
+                                                                        signals.append(None)
+                                                        if exportinfo[x] == '1':
+                                                                try:
+                                                                        exp_signals.append(round(float(extraData[ImportInd])/float(factors[x]),2))
+                                                                except:
+                                                                        exp_signals.append(None)
+                                                        ImportInd = ImportInd + 1
+                                                        
+                                                elif vartype[x] == 'calc':
+                                                        if loginfo[x] == '1':
+                                                                try:
+                                                                        signals.append(round(float(ExtraCalc[CalcInd])/float(factors[x]),2))
+                                                                except:
+                                                                        signals.append(None)
+                                                        if exportinfo[x] == '1':
+                                                                try:
+                                                                        exp_signals.append(round(float(ExtraCalc[CalcInd])/float(factors[x]),2))
+                                                                except:
+                                                                        exp_signals.append(None)
+                                                        CalcInd = CalcInd + 1
+                                                else:
+                                                        signals.append(None)
+                                                        if EnableDebug == 1:
+                                                                print "Warning: problem merging all extra signals."
+                                                                print "Signal type has to be calc or import"
+                                                        if EnableErrorLog == 1:
+                                                                with open(ErrorLog,'a') as err:
+                                                                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Wrong signal type of extra data detected.\n")
+
+                                                                                           
 
                                 #Print data if console output is enabled
                                 if EnableConsole == 1:
