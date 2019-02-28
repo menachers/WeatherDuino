@@ -10,7 +10,7 @@ import struct
 import sys
 from sendmail import sendmail
 
-#For use with raspberry pi plese change to your absolute paths
+#For use with raspberry pi please change to your absolute paths
 HeaderName = "/home/pi/WeatherDuino/Transmission_Layout.csv"
 Logfile = "/home/pi/WeatherDuino/Weatherduinotest.txt"
 WeeWxFile= "/home/pi/WeatherDuino/WeeWx_Exp.txt"
@@ -64,12 +64,12 @@ mailSent = 0
 CollectorExecuted = 0
 
 print "WeatherDuino data reveiving and logging script"
-print "Version 3.3"
+print "Version 3.4"
 print "Logfile name: ", Logfile
-print "Used layout file: ", HeaderName
+print "Used signal description file: ", HeaderName
 if EnableErrorLog == 1:
         print "Error logs enabled!"
-        print "Logfile can be found here:", ErrorLog
+        print "Logfile is saved here:", ErrorLog
         with open(ErrorLog,'a') as err:
                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Logging script started.\n")
         
@@ -86,7 +86,7 @@ except:
         print"No layout file found. Exiting."
         if EnableErrorLog == 1:
                 with open(ErrorLog,'a') as err:
-                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " No layout file found. Script aborted.\n")
+                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " No signal description file found. Script aborted.\n")
         sys.exit(1)
 structformat = list()
 variableLength = list()
@@ -120,9 +120,9 @@ for headerrun,headerline in enumerate(header.readlines()):
                 #print(headerline)
                 #When alias names are read, generate corresponding name out of the variable name if no alias is given
                 for x in range(len(names)):
-                    if alias[x] != '':
-                        names[x] = alias[x]
-                        #print names
+                    if alias[x] == '':
+                        alias[x] = names[x]
+                        #print alias
 
         #Get the info if the signal should be logged
         if headerrun == 3:
@@ -139,7 +139,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                 #When WeeWx alias names are read, generate corresponding name if no special WeeWx alias name is given
                 for x in range(len(names)):
                     if WeeWxAlias[x] == '':
-                        WeeWxAlias[x] = names[x]
+                        WeeWxAlias[x] = alias[x]
 
         #Get the info if the signal should be exported to WeeWx
         if headerrun == 5:
@@ -196,7 +196,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                                         if EnableDebug == 1:                                
                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Unknown type detected in calc or import variables."
 
-                #Check if everything has been successfully       
+                #Check if everything has been read successfully       
                 bytesum = sum(variableLength)
                 print("Sum of all expected bytes from the WeatherDuino logger: " + str(bytesum))
                 
@@ -234,10 +234,7 @@ for headerrun,headerline in enumerate(header.readlines()):
 #Close header file
 header.close()
 
-#Check for signal which needs extra treatment such as calculation values and extra collected data
 
-
-#Check signal names which have to be logged and store how many signals should be received originally
 CompSignalCount = RcvCnt
 #print len(names)
 #print len(loginfo)
@@ -247,22 +244,21 @@ lognames = []
 logunits = []
 logfactors = []
 expWeeWxAlias = []
-expnames = []
 expunits = []
 expfactors = []
 
 #Create lists for variables to be logged
 for n in range(len(names)):
         if loginfo[n] == '1':
-                lognames.append(names[n])
+                lognames.append(alias[n])
                 logunits.append(units[n])
                 logfactors.append(factors[n])
         if exportinfo[n] == '1':
-                expnames.append(names[n])
                 expunits.append(exportunitinfo[n])
                 expfactors.append(factors[n])
                 expWeeWxAlias.append(WeeWxAlias[n])
-                
+
+
 #Open logfile as read and append
 try:
         output = open(Logfile,'a+')
@@ -316,7 +312,7 @@ else:
 #Close log file
 output.close()
 
-#all the prestuff is finished - state machine is starting now
+#all the setup stuff is finished - state machine is starting now
 state = 0
 
 #Open try container to provide stop function via keyboard interrupt exception
@@ -464,7 +460,7 @@ try:
                         ###This part is only executed once in a waiting sequence after a specified time (CollectDelay) when the last logging has ended
                         if (datetime.now()-timebuffer) > timedelta(seconds=CollectDelay) and CollectorExecuted == 0:
                                 extraData = list()
-                                extraData.append(103)
+                                #extraData.append(103)
 
 
                         ###End of User Space++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++###
@@ -493,20 +489,23 @@ try:
                                 x=0
                                 #Signal array
                                 signals = []
+                                allsignals = []
                                 exp_signals = []
                                 #walk through all received signals from WeatherDuino included the ones wich will be dropped (CompSignalCount)
                                 while x < CompSignalCount:
                                         #generate signal value from byte array according to byte length and signal position
-                                        #struct.unpack funktion is used. Structformat and variable length are already evaluated at the beginng reading the layout file.
+                                        #struct.unpack funktion is used. Structformat and variable length are already evaluated at the beginng reading the signal description file.
                                         value = struct.unpack(structformat[x], ''.join(data[pos:(pos+variableLength[x])]))[0]
                                         #Convert timestamp
                                         if(x==0):
                                                 value = datetime.fromtimestamp(value, tz=pytz.UTC).strftime('%Y-%m-%d %H:%M:%S')
+                                                allsignals.append(value)
                                                 signals.append(value)
                                                 exp_signals.append(value)
                                         #Convert signals
                                         else:
                                                 #scale with factor and append to list if signal should be logged which is defined in the layout file
+                                                allsignals.append(round(float(value)/float(factors[x]),2))
                                                 if loginfo[x] == '1':
                                                         signals.append(round(float(value)/float(factors[x]),2))
                                                 if exportinfo[x] == '1':
@@ -523,7 +522,54 @@ try:
                                 #++++++++++++++Parser has to be implemented here+++++++++++++++++#
                                 if ExtraCalcVar > 0:
                                         ExtraCalc = list()
-                                        ExtraCalc.append((signals[4]/signals[18])*100)
+                                        formulaError=0
+                                        try:
+                                                if allsignals[names.index('PacketsSentPerHour_0')]!=0:
+                                                        ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX0')]/allsignals[names.index('PacketsSentPerHour_0')])
+                                                else:
+                                                        ExtraCalc.append(None)
+                                                formulaError = formulaError+1
+
+                                                if allsignals[names.index('PacketsSentPerHour_1')]!=0:
+                                                        ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX1')]/allsignals[names.index('PacketsSentPerHour_1')])
+                                                else:
+                                                        ExtraCalc.append(None)
+                                                formulaError = formulaError+1
+                                                        
+                                                if allsignals[names.index('PacketsSentPerHour_2')]!=0:
+                                                        ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX2')]/allsignals[names.index('PacketsSentPerHour_2')])
+                                                else:
+                                                        ExtraCalc.append(None)
+                                                formulaError = formulaError+1
+
+                                                if allsignals[names.index('PacketsSentPerHour_3')]!=0:
+                                                        ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX3')]/allsignals[names.index('PacketsSentPerHour_3')])
+                                                else:
+                                                        ExtraCalc.append(None)
+                                                formulaError = formulaError+1
+
+                                                ExtraCalc.append(allsignals[names.index('TotalRain_tips_0')]*allsignals[names.index('COLLECTOR_TYPE_0')])
+                                                formulaError = formulaError+1
+                                                ExtraCalc.append(allsignals[names.index('Rainftipshour_0')]*allsignals[names.index('COLLECTOR_TYPE_0')])
+                                                formulaError = formulaError+1
+                                                ExtraCalc.append(allsignals[names.index('TotalRain_tips_1')]*allsignals[names.index('COLLECTOR_TYPE_1')])
+                                                formulaError = formulaError+1
+                                                ExtraCalc.append(allsignals[names.index('Rainftipshour_1')]*allsignals[names.index('COLLECTOR_TYPE_1')])
+                                                formulaError = formulaError+1
+                                                ExtraCalc.append(allsignals[names.index('TotalRain_tips_2')]*allsignals[names.index('COLLECTOR_TYPE_2')])
+                                                formulaError = formulaError+1
+                                                ExtraCalc.append(allsignals[names.index('Rainftipshour_2')]*allsignals[names.index('COLLECTOR_TYPE_2')])
+                                                formulaError = formulaError+1
+                                                ExtraCalc.append(allsignals[names.index('TotalRain_tips_3')]*allsignals[names.index('COLLECTOR_TYPE_3')])
+                                                formulaError = formulaError+1
+                                                ExtraCalc.append(allsignals[names.index('Rainftipshour_3')]*allsignals[names.index('COLLECTOR_TYPE_3')])
+                                        except:
+                                                if EnableDebug == 1:
+                                                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error in calculation formula at position " + str(formulaError)
+                                                        print "Signal type has to be calc or import"
+                                                if EnableErrorLog == 1:
+                                                        with open(ErrorLog,'a') as err:
+                                                                err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error in calculation formula " + str(formulaError) + "\n")
 
                                 #Now merge all the extra signals received
                                 if ExtDataCnt > 0:
@@ -685,13 +731,16 @@ try:
                                                                         exp_signals[i+1] = exp_signals[i+1]/33.864    
                                                                 if expunits[i] == 'group_speed':
                                                                         exp_signals[i+1] = exp_signals[i+1]/1.609
-
+                                                                if expunits[i] == 'group_rain':
+                                                                        exp_signals[i+1] = exp_signals[i+1]/2.54
+                                                                if expunits[i] == 'group_rainrate':
+                                                                        exp_signals[i+1] = exp_signals[i+1]/2.54
 
                                                         #Walk through all signals and write them to the export file
-                                                        for i in range(len(expnames)+1):    
+                                                        for i in range(len(expWeeWxAlias)+1):    
                                                                 #write to file
                                                                 #if last column is reached write signal with end of line delimiter
-                                                                if i == len(expnames):
+                                                                if i == len(expWeeWxAlias):
                                                                         export.write(str(exp_signals[i]) + '\n')
                                                                         #print(str(exp_signals[i]) +'\n')
                                                                 #otherwise write signal values with column delemiter
