@@ -11,8 +11,8 @@ import sys
 from sendmail import sendmail
 
 #For use with raspberry pi please change to your absolute paths
-HeaderName = "/home/pi/WeatherDuino/Transmission_Layout.csv"
-Logfile = "/home/pi/WeatherDuino/Weatherduinotest.txt"
+HeaderName = "/home/pi/WeatherDuino/Signal_Description.csv"
+Logfile = "/home/pi/WeatherDuino/WeatherduinoLog.txt"
 WeeWxFile= "/home/pi/WeatherDuino/WeeWx_Exp.txt"
 ErrorLog = "/home/pi/WeatherDuino/Weatherduino_Errors.txt"
 SerialPort = '/dev/serial0'
@@ -64,7 +64,7 @@ mailSent = 0
 CollectorExecuted = 0
 
 print "WeatherDuino data reveiving and logging script"
-print "Version 3.4"
+print "Version 4.0"
 print "Logfile name: ", Logfile
 print "Used signal description file: ", HeaderName
 if EnableErrorLog == 1:
@@ -194,7 +194,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                                         ExtraImportVar = ExtraImportVar + 1
                                 else:
                                         if EnableDebug == 1:                                
-                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Unknown type detected in calc or import variables."
+                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Unknown type of calc or import variables detected."
 
                 #Check if everything has been read successfully       
                 bytesum = sum(variableLength)
@@ -288,12 +288,12 @@ if num_lines >0:
     #print warnings if headers are not matching
     else:
         print ("WARNING!").center(80, "*")
-        print "Signal names of the provided logfile and actual layout file do not match."
+        print "Signal names of the provided logfile and the signal description file do not match."
         print "Please start a new logfile."
         print ("").center(80, "*")
         if EnableErrorLog == 1:
                 with open(ErrorLog,'a') as err:
-                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Warning! Signal names of actual log file and layout file do not match.\n")
+                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Warning! Signal names of actual log file and signal description file do not match.\n")
 #write new header if file is empty
 else:
     print "New file detected, new header is written."
@@ -390,12 +390,12 @@ try:
                                                         print ("WARNING!").center(80, "*")
                                                         print "Expected number of bytes is not matching with byte count sent by WeatherDuino."
                                                         print str(bytecount) + " != " + str(struct.unpack("H", ''.join(data[-5:-4]))[0])
-                                                        print "Please check the Com_Transmit plugin and the layout file."
+                                                        print "Please check the Com_Transmit plugin and the signal description file."
                                                         print "Continuing makes no sense from this point. Script will exit."
                                                         print ("").center(80, "*")
                                                         if EnableErrorLog == 1:
                                                                 with open(ErrorLog,'a') as err:
-                                                                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Missmatch of expected and transmitted bytes. Check layout file and WeatherDuino plugin.\n")
+                                                                        err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Missmatch of expected and transmitted bytes. Check signal description file and WeatherDuino plugin.\n")
                                                         sys.exit(1)
                                                 data = []
                                 
@@ -470,7 +470,7 @@ try:
                         #Check if data in list is valid
                         if len(extraData) != ExtraImportVar and CheckVar == 1:
                                 if EnableDebug == 1:
-                                        print "Warning: Signal count of extra data defined in layout file and actual signal list are not matching."
+                                        print "Warning: Signal count of extra data defined in signal description file and actual signal list are not matching."
                                         print "Defined signals are " + str(ExtraImportVar) + "! Legth of the signal list is "+ str(len(extraData)) + "!"
                                 if EnableErrorLog == 1:
                                         with open(ErrorLog,'a') as err:
