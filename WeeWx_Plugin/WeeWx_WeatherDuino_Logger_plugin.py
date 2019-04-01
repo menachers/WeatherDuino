@@ -41,6 +41,7 @@ class WeeWxService(StdService):
         self.filename = d.get('filename', '/home/pi/WeatherDuino/WeeWx_Exp.txt')
         syslog.syslog(syslog.LOG_INFO, "WeatherDuino: using %s" % self.filename)
         self.bind(weewx.NEW_ARCHIVE_RECORD, self.read_file)
+        self.last_rain = [None, None, None, None]
     
     def read_file(self, event):
         try:
@@ -53,71 +54,59 @@ class WeeWxService(StdService):
                         units = row.strip().split(";")
                     if line == 2:
                         values = row.strip().split(";")
-
-            #Define path of safefile
-            safefile = '/home/pi/WeatherDuino/Rain_tmp.txt'
-            try:
-                with open(safefile,'r') as tmp:
-                        for line,row in enumerate(tmp.readlines()):
-                            if line == 0:
-                                tmprain = row.strip().split(";")
-                            else:
-                                tmprain=[]
-                print "Safefile file opened and read " + str(len(tmprain)) + " entries."
-            except:
-                tmprain=[]
                         
             #Read timestamp of data and convert it
             timestamp = strptime(values[0], '%Y-%m-%d %H:%M:%S')
             dt = datetime.fromtimestamp(mktime(timestamp))
             #Check if read data is not older than 3 minutes
             if (datetime.now()-dt).total_seconds() < 180:
-                syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: valid values found")
+                syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Valid values found")
 
-                #Create index pointer for rain buffer vector
+                #Create index pointer for last_rain buffer list and error handling
                 rainind=0
+                error_ind = 0
+                deltarain = 0
 
                 for n in range(len(values)-1):
+                    error_ind = n
                     #Convert transmitted total rain value to rain delta since last WeeWx import
                     if units[n+1] == 'group_rain':
                         #Check if the safe file contains enough entries
-                        if rainind < len(tmprain):
+                        if rainind < len(self.last_rain):
                             #if yes calculate the rain difference and store the new rain value into the buffer
                             try:
-                                deltarain = float(values[n+1]) - float(tmprain[rainind])
-                                tmprain[rainind] = float(values[n+1])
+                                #Handle if variable is None after a restart of WeeWx
+                                if self.last_rain[rainind] != None:
+                                    deltarain = float(values[n+1]) - self.last_rain[rainind]
+                                else:
+                                    deltarain = None
+
+                                self.last_rain[rainind] = float(values[n+1])
                             except:
                                 deltarain = None
                         #If there are not enough entries - for which reason ever - write None to WeeWx and add a entry to the buffer
                         else:
                             deltarain = None
-                            tmprain.append(values[n+1])
 
                         #Check the integrity of the data maybe the rain counter of the WeatherDuino has run over or other strange things happened causing ghost rain
                         if deltarain < 0 or deltarain > 30:
                             deltarain = None
                         #Add the value to the WeeWx database
+                        #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: " + str(names[n+1]) + ": " + str(deltarain))
                         event.record[str(names[n+1])] = deltarain
                         #Shift rain index to handle more rain signals
                         rainind = rainind + 1
                     #Handle all other signals
                     else:
                         event.record[str(names[n+1])] = float(values[n+1])
-
-                #Write actual rain values to buffer file
-                with open(safefile, 'w') as tmp:
-                    for i in range (len(tmprain)):
-                        if i == len(tmprain)-1:
-                            tmp.write(str(tmprain[i]) + '\n')
-                        else:
-                            tmp.write(str(tmprain[i]) + ';')
+                        #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: " + str(names[n+1]) + ": " + str(values[n+1]))
                         
             #Else throw an exception
             else:
-                syslog.syslog(syslog.LOG_ERR, "WeatherDuino Logger: Data is too old. Check logging addon!")
+                syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Data is too old. Check logging addon!")
 
         except Exception, e:
-            syslog.syslog(syslog.LOG_ERR, "WeatherDuino Logger: Error reading values")
+            syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Processing error at positon " + str(names[error_ind+1]))
 
 
 #################################################################################
