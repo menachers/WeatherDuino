@@ -44,6 +44,8 @@ class WeeWxService(StdService):
         self.last_rain = [None, None, None, None]
     
     def read_file(self, event):
+        error_ind = -1
+        archive_dt = 1
         try:
             #Read data from WeatherDuino Logger output txt file
             with open(self.filename) as f:
@@ -58,8 +60,12 @@ class WeeWxService(StdService):
             #Read timestamp of data and convert it
             timestamp = strptime(values[0], '%Y-%m-%d %H:%M:%S')
             dt = datetime.fromtimestamp(mktime(timestamp))
+            archive_dt = datetime.fromtimestamp(event.record['dateTime'])
+            syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Archive timestamp: " + str(archive_dt))
+            syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Data timestamp: " + str(dt))
             #Check if read data is not older than 3 minutes
-            if (datetime.now()-dt).total_seconds() < 180:
+            #if (datetime.now()-dt).total_seconds() < 180:
+            if (dt - archive_dt).total_seconds() < 180:
                 syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Valid values found")
 
                 #Create index pointer for last_rain buffer list and error handling
@@ -106,7 +112,7 @@ class WeeWxService(StdService):
                 syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Data is too old. Check logging addon!")
 
         except Exception, e:
-            syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Processing error at positon " + str(names[error_ind+1]))
+            syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Processing error at positon " + str(error_ind)+ ": " + str(names[error_ind+1]))
 
 
 #################################################################################
@@ -120,3 +126,5 @@ with open(filename) as f:
 schema_WeatherDuino = schemas.wview.schema
 for n in range(len(names)-1):
 	schema_WeatherDuino = schema_WeatherDuino + [(str(names[n+1]), 'REAL')]
+schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
+schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
