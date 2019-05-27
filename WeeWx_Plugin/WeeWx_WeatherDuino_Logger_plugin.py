@@ -56,13 +56,17 @@ class WeeWxService(StdService):
                         units = row.strip().split(";")
                     if line == 2:
                         values = row.strip().split(";")
-                        
+
+            syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Unit of record to be archived: " + str(event.record['usUnits']))                        
+
             #Read timestamp of data and convert it
             timestamp = strptime(values[0], '%Y-%m-%d %H:%M:%S')
             dt = datetime.fromtimestamp(mktime(timestamp))
+            #Read timestamp of the record and convert it
             archive_dt = datetime.fromtimestamp(event.record['dateTime'])
             syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Archive timestamp: " + str(archive_dt))
             syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Data timestamp: " + str(dt))
+            
             #Check if read data is not older than 3 minutes
             #if (datetime.now()-dt).total_seconds() < 180:
             if (dt - archive_dt).total_seconds() < 180:
@@ -75,6 +79,25 @@ class WeeWxService(StdService):
 
                 for n in range(len(values)-1):
                     error_ind = n
+
+                    #First convert data to target units if necessary
+                    if event.record['usUnits'] == 1:
+                        #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Converting relevant signals to target unit")                        
+
+                        #First check temperatures and convert to degree Farenheit
+                        if units[n+1] == 'group_temperature':
+                                values[n+1] = 1.8*float(values[n+1])+32
+                        if units[n+1] == 'group_length':
+                                values[n+1] = float(values[n+1])/2.54
+                        if units[n+1] == 'group_pressure':
+                                values[n+1] = float(values[n+1])/33.864    
+                        if units[n+1] == 'group_speed':
+                                values[n+1] = float(values[n+1])/1.609
+                        if units[n+1] == 'group_rain':
+                                values[n+1] = float(values[n+1])/25.4
+                        if units[n+1] == 'group_rainrate':
+                                values[n+1] = float(values[n+1])/25.4
+                    
                     #Convert transmitted total rain value to rain delta since last WeeWx import
                     if units[n+1] == 'group_rain':
                         #Check if the safe file contains enough entries

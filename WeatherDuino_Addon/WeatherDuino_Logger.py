@@ -29,9 +29,6 @@ EnableErrorLog = 1
 EnableMail = 1
 #Enables WeeWx Export
 EnableWeeWx = 1
-#Enables Conversion to US Units for WeeWx Export
-#This might be necesary to get correct values
-convertUS = 1
 
 #Time in sec after the last succesful logging event the extra data collector is executed
 CollectDelay = 10
@@ -497,7 +494,7 @@ try:
                                 #walk through all received signals from WeatherDuino included the ones wich will be dropped (CompSignalCount)
                                 while x < CompSignalCount:
                                         #generate signal value from byte array according to byte length and signal position
-                                        #struct.unpack funktion is used. Structformat and variable length are already evaluated at the beginng reading the signal description file.
+                                        #struct.unpack function is used. Structformat and variable length are already evaluated at the beginng reading the signal description file.
                                         value = struct.unpack(structformat[x], ''.join(data[pos:(pos+variableLength[x])]))[0]
                                         #Convert timestamp
                                         if(x==0):
@@ -723,22 +720,6 @@ try:
                                                                 else:
                                                                         export.write(str(expunits[i]) + ';')
 
-                                                        #convert signals to US units if necessary to ensure correct encoding in WeeWx
-                                                        if convertUS == 1:
-                                                                for i in range (len(expunits)):
-                                                                        #First check temperatures and convert to degree Farenheit
-                                                                        if expunits[i] == 'group_temperature':
-                                                                                exp_signals[i+1] = 1.8*exp_signals[i+1]+32
-                                                                        if expunits[i] == 'group_length':
-                                                                                exp_signals[i+1] = exp_signals[i+1]/2.54
-                                                                        if expunits[i] == 'group_pressure':
-                                                                                exp_signals[i+1] = exp_signals[i+1]/33.864    
-                                                                        if expunits[i] == 'group_speed':
-                                                                                exp_signals[i+1] = exp_signals[i+1]/1.609
-                                                                        if expunits[i] == 'group_rain':
-                                                                                exp_signals[i+1] = exp_signals[i+1]/25.4
-                                                                        if expunits[i] == 'group_rainrate':
-                                                                                exp_signals[i+1] = exp_signals[i+1]/25.4
 
                                                         #Walk through all signals and write them to the export file
                                                         for i in range(len(expWeeWxAlias)+1):    
