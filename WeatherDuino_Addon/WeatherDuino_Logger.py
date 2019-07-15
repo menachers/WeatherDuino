@@ -153,10 +153,15 @@ for headerrun,headerline in enumerate(header.readlines()):
                 exportunitinfo = headerline.strip().split(";");
                 #Delete first column
                 del exportunitinfo[0]
+        #Get the unit type info for WeeWx
+        if headerrun == 7:
+                exportunittype = headerline.strip().split(";");
+                #Delete first column
+                del exportunittype[0]
         
         #parse possible variable types to get format characters for the python struct module
         #Only variables until termination of the layout file to ensure correct calculation of the checksum of the WeatherDuino logger plugin.
-        if headerrun == 7:
+        if headerrun == 8:
                 vartype = headerline.strip().split(";");
                 #Remove first element since it is 
                 del vartype[0]
@@ -213,7 +218,7 @@ for headerrun,headerline in enumerate(header.readlines()):
 
         
         #read scaling factors of all signals
-        if headerrun == 8:
+        if headerrun == 9:
                 factors = headerline.strip().split(";");
                 del factors[0]
                 try:
@@ -228,7 +233,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                         sys.exit(1)
 
         #read corresponding units of all signals
-        if headerrun == 9:
+        if headerrun == 10:
                 units = headerline.strip().split(";");
                 del units[0]
 #Close header file
@@ -246,6 +251,8 @@ logfactors = []
 expWeeWxAlias = []
 expunits = []
 expfactors = []
+expunittype = []
+
 
 #Create lists for variables to be logged
 for n in range(len(names)):
@@ -255,6 +262,7 @@ for n in range(len(names)):
                 logfactors.append(factors[n])
         if exportinfo[n] == '1':
                 expunits.append(exportunitinfo[n])
+                expunittype.append(exportunittype[n])
                 expfactors.append(factors[n])
                 expWeeWxAlias.append(WeeWxAlias[n])
 
@@ -453,6 +461,7 @@ try:
                         ###+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++###
                         ###Do processing of other sources here and store it into a data vector as you want      ###
                         ###Data must be sorted as defined in the layout file                                    ###
+                        ###Take care that your function terminates within 10 seconds, also in case of a failure ###
                         ###+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++###
 
 
@@ -719,7 +728,14 @@ try:
                                                                         export.write(str(expunits[i]) + '\n')
                                                                 else:
                                                                         export.write(str(expunits[i]) + ';')
-
+                                                        #Print unit type
+                                                        export.write(';')
+                                                        for i in range (len(expunittype)):
+                                                                if i == len(expunittype)-1:
+                                                                        export.write(str(expunittype[i]) + '\n')
+                                                                else:
+                                                                        export.write(str(expunittype[i]) + ';')
+                                                                        
 
                                                         #Walk through all signals and write them to the export file
                                                         for i in range(len(expWeeWxAlias)+1):    

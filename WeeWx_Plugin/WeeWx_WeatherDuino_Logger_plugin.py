@@ -55,6 +55,8 @@ class WeeWxService(StdService):
                     if line == 1:
                         units = row.strip().split(";")
                     if line == 2:
+                        unittype = row.strip().split(";")
+                    if line == 3:
                         values = row.strip().split(";")
 
             syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Unit of record to be archived: " + str(event.record['usUnits']))                        
@@ -80,24 +82,7 @@ class WeeWxService(StdService):
                 for n in range(len(values)-1):
                     error_ind = n
 
-                    #First convert data to target units if necessary
-                    if event.record['usUnits'] == 1:
-                        #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Converting relevant signals to target unit")                        
-
-                        #First check temperatures and convert to degree Farenheit
-                        if units[n+1] == 'group_temperature':
-                                values[n+1] = 1.8*float(values[n+1])+32
-                        if units[n+1] == 'group_length':
-                                values[n+1] = float(values[n+1])/2.54
-                        if units[n+1] == 'group_pressure':
-                                values[n+1] = float(values[n+1])/33.864    
-                        if units[n+1] == 'group_speed':
-                                values[n+1] = float(values[n+1])/1.609
-                        if units[n+1] == 'group_rain':
-                                values[n+1] = float(values[n+1])/25.4
-                        if units[n+1] == 'group_rainrate':
-                                values[n+1] = float(values[n+1])/25.4
-                    
+                   
                     #Convert transmitted total rain value to rain delta since last WeeWx import
                     if units[n+1] == 'group_rain':
                         #Check if the safe file contains enough entries
@@ -120,17 +105,36 @@ class WeeWxService(StdService):
                         #Check the integrity of the data maybe the rain counter of the WeatherDuino has run over or other strange things happened causing ghost rain
                         if deltarain < 0 or deltarain > 30:
                             deltarain = None
-                        #Add the value to the WeeWx database
-                        #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: " + str(names[n+1]) + ": " + str(deltarain))
-                        event.record[str(names[n+1])] = deltarain
-                        #Shift rain index to handle more rain signals
+
+                        #Try to perform an automatic unit conversion into the chosen target system in WeeWx
+                        try:
+                            #Create temporary value tuple for WeeWx integrated unit conversion
+                            temp_vt = weewx.units.ValueTuple(deltarain, str(unittype[n+1]), str(units[n+1]))              
+                            #Augment rain data to archive record with the appropriately converted value
+                            #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: " + str(names[n+1]) + ": " + str(deltarain))
+                            event.record[str(names[n+1])] = weewx.units.convertStd(temp_vt, event.record['usUnits'])[0]
+                        #if the automatic conversion fails, just augment the data as it is and rise an error
+                        except:
+                            event.record[str(names[n+1])] = deltarain
+                            syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Not able to convert the signal " + str(names[n+1])+". Check if unit group " + str(units[n+1]) + " contains an unit type called " + str(unittype[n+1]) + ".")
+                            
+                        #Shift rain index to handle more rain signals                        
                         rainind = rainind + 1
                     #Handle all other signals
                     else:
-                        event.record[str(names[n+1])] = float(values[n+1])
-                        #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: " + str(names[n+1]) + ": " + str(values[n+1]))
+                        #Try to perform an automatic unit conversion into the chosen target system in WeeWx
+                        try:
+                            #Create temporary value tuple for WeeWx integrated unit conversion
+                            temp_vt = weewx.units.ValueTuple(float(values[n+1]), str(unittype[n+1]), str(units[n+1]))
+                            #Augment data to archive record with the appropriately converted value
+                            event.record[str(names[n+1])] = weewx.units.convertStd(temp_vt, event.record['usUnits'])[0]
+                            #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: " + str(names[n+1]) + ": " + str(values[n+1]))
+                        #if the automatic conversion fails, just augment the data as it is and rise an error
+                        except:
+                            event.record[str(names[n+1])] = float(values[n+1])
+                            syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Not able to convert the signal " + str(names[n+1])+". Check if unit group " + str(units[n+1]) + " contains an unit type called " + str(unittype[n+1]) + ".")
                         
-            #Else throw an exception
+            #Else throw an exception that the data is too old
             else:
                 syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Data is too old. Check logging addon!")
 
@@ -149,5 +153,6 @@ with open(filename) as f:
 schema_WeatherDuino = schemas.wview.schema
 for n in range(len(names)-1):
 	schema_WeatherDuino = schema_WeatherDuino + [(str(names[n+1]), 'REAL')]
-schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
-schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
+#if you also have the plugin for the lightning sensor installed
+#schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
+#schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
