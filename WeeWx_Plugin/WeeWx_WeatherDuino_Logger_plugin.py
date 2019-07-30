@@ -76,7 +76,6 @@ class WeeWxService(StdService):
 
                 #Create index pointer for last_rain buffer list and error handling
                 rainind=0
-                error_ind = 0
                 deltarain = 0
 
                 for n in range(len(values)-1):
@@ -139,7 +138,10 @@ class WeeWxService(StdService):
                 syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Data is too old. Check logging addon!")
 
         except Exception, e:
-            syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Processing error at positon " + str(error_ind)+ ": " + str(names[error_ind+1]))
+            if error_ind >= 0:
+                syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Processing error at positon " + str(error_ind)+ ": " + str(names[error_ind+1]))
+            else:
+                syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Initialization error of files. Check correct export file generation in logging script if this keeps happening.")
 
 
 #################################################################################
@@ -154,5 +156,5 @@ schema_WeatherDuino = schemas.wview.schema
 for n in range(len(names)-1):
 	schema_WeatherDuino = schema_WeatherDuino + [(str(names[n+1]), 'REAL')]
 #if you also have the plugin for the lightning sensor installed
-#schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
-#schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
+schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
+schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
