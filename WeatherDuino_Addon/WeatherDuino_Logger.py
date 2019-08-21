@@ -355,12 +355,12 @@ try:
                 #Read serial port whenever data is received or go to sleep if no data is found in the serial buffer
                 if state == 1:
                         try:
+                                ErrorCode = 11
                                 #check if data is in the serial buffer, if yes get it and append to the buffer array
                                 if (ser.inWaiting()>0):
                                         c = ser.read()
                                         if len(c) != 0:
                                                 data.append(c)
-                                        ErrorCode = 11
                                 #otherwise sleep 500ms to save cpu time
                                 else:
                                         time.sleep(0.5)

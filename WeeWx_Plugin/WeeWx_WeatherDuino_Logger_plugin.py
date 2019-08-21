@@ -156,5 +156,5 @@ schema_WeatherDuino = schemas.wview.schema
 for n in range(len(names)-1):
 	schema_WeatherDuino = schema_WeatherDuino + [(str(names[n+1]), 'REAL')]
 #if you also have the plugin for the lightning sensor installed
-schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
-schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
+#schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
+#schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
