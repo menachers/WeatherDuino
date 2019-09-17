@@ -18,19 +18,21 @@ ErrorLog = "/home/pi/WeatherDuino/Weatherduino_Errors.txt"
 SerialPort = '/dev/serial0'
 
 #Enables output of all values in console
-EnableConsole = 1
+EnableConsole = 0
 #Enables debugging outputs
-EnableDebug = 1
+EnableDebug = 0
 #Enable Error log
 EnableErrorLog = 1
 #Enables E-Mail notifications in case of a lost datastream
 #Mail settings have to be performed below
 #Please be aware of some routers blocking mails to be sent from unknown servers
-EnableMail = 1
+EnableMail = 0
 #Enables WeeWx Export
 EnableWeeWx = 1
+#Enables removing non valid values because of not updated data in the RX module
+EnableValidyCheck = 1
 
-#Time in sec after the last succesful logging event the extra data collector is executed
+#Time in sec after the last successful logging event the extra data collector is executed
 CollectDelay = 10
 
 #
@@ -355,12 +357,12 @@ try:
                 #Read serial port whenever data is received or go to sleep if no data is found in the serial buffer
                 if state == 1:
                         try:
-                                ErrorCode = 11
                                 #check if data is in the serial buffer, if yes get it and append to the buffer array
                                 if (ser.inWaiting()>0):
                                         c = ser.read()
                                         if len(c) != 0:
                                                 data.append(c)
+                                        ErrorCode = 11
                                 #otherwise sleep 500ms to save cpu time
                                 else:
                                         time.sleep(0.5)
@@ -497,9 +499,9 @@ try:
                                 #orgname index
                                 x=0
                                 #Signal array
-                                signals = []
+                                #signals = []
                                 allsignals = []
-                                exp_signals = []
+                                #exp_signals = []
                                 #walk through all received signals from WeatherDuino included the ones wich will be dropped (CompSignalCount)
                                 while x < CompSignalCount:
                                         #generate signal value from byte array according to byte length and signal position
@@ -509,16 +511,16 @@ try:
                                         if(x==0):
                                                 value = datetime.fromtimestamp(value, tz=pytz.UTC).strftime('%Y-%m-%d %H:%M:%S')
                                                 allsignals.append(value)
-                                                signals.append(value)
-                                                exp_signals.append(value)
+                                                #signals.append(value)
+                                                #exp_signals.append(value)
                                         #Convert signals
                                         else:
                                                 #scale with factor and append to list if signal should be logged which is defined in the layout file
                                                 allsignals.append(round(float(value)/float(factors[x]),2))
-                                                if loginfo[x] == '1':
-                                                        signals.append(round(float(value)/float(factors[x]),2))
-                                                if exportinfo[x] == '1':
-                                                        exp_signals.append(round(float(value)/float(factors[x]),2))
+                                                #if loginfo[x] == '1':
+                                                #        signals.append(round(float(value)/float(factors[x]),2))
+                                                #if exportinfo[x] == '1':
+                                                #        exp_signals.append(round(float(value)/float(factors[x]),2))
                                         
                                         #move byte index
                                         pos = pos+variableLength[x]
@@ -527,51 +529,232 @@ try:
                                 #print 'Unix time :' + str(struct.unpack("L", ''.join(data[0:4]))[0])
                                 #print 'Datetime UTC:' + str(datetime.fromtimestamp(int(struct.unpack("L", ''.join(data[0:4]))[0]), tz=pytz.UTC).strftime('%Y-%m-%d %H:%M:%S'))
 
+                                try:
+                                        #Do signal validation according to a defined scheme and remove invalid datasets if necesseray. This might happen if the RX module is rebooted
+                                        if EnableValidyCheck == 1:
+                                                #Criteria to set all signales received from a specific TX source to None
+                                                #I chose that the message with how much packets should be sent each hour was no received. Since this package is sent every 80s seconds it might a bit of a time until the script logs valid
+                                                #signals even if wind and temperature are already received correctly.
+
+                                                #Do filtering for TX0
+                                                if allsignals[names.index('PacketsSentPerHour_0')] == 0:
+                                                        IndStart = names.index('Temperature_Out_0.0')
+                                                        IndEnd = names.index('COLLECTOR_TYPE_0')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX0 detected"
+                                                        
+                                                #Do filtering for TX1
+                                                if allsignals[names.index('PacketsSentPerHour_1')] == 0:
+                                                        IndStart = names.index('Temperature_Out_1.0')
+                                                        IndEnd = names.index('COLLECTOR_TYPE_1')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX1 detected"
+                                                        
+                                                #Do filtering for TX2
+                                                if allsignals[names.index('PacketsSentPerHour_2')] == 0:
+                                                        IndStart = names.index('Temperature_Out_2.0')
+                                                        IndEnd = names.index('COLLECTOR_TYPE_2')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX2 detected"
+                                                        
+                                                #Do filtering for TX3
+                                                if allsignals[names.index('PacketsSentPerHour_3')] == 0:
+                                                        IndStart = names.index('Temperature_Out_3.0')
+                                                        IndEnd = names.index('COLLECTOR_TYPE_3')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX3 detected"
+
+                                                #Do filtering for AQM
+                                                if allsignals[names.index('AQI_Index')] == 0:
+                                                        IndStart = names.index('AQI_PM1_0')
+                                                        IndEnd = names.index('GAS_2')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for AQM detected"
+
+                                                #Do filtering for Soil / Leaf - check two soil temperatures since is very unlikely that both are 0.0 (if you have only one sensor installed it might happen that good data is cut out
+                                                if allsignals[names.index('Soil_Temp1')] and allsignals[names.index('Soil_Temp2')] == 0:
+                                                        IndStart = names.index('Soil_Temp1')
+                                                        IndEnd = names.index('Leaf_Wetness4')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for Soil/Leaf detected"
+
+                                                #Do filtering for WD0
+                                                if allsignals[names.index('WiFi_T0')] == 0 and allsignals[names.index('WiFi_H0')] == 0:
+                                                        IndStart = names.index('WiFi_T0')
+                                                        IndEnd = names.index('WiFi_H0')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD0 detected"
+
+                                                #Do filtering for WD1
+                                                if allsignals[names.index('WiFi_T1')] == 0 and allsignals[names.index('WiFi_H1')] == 0:
+                                                        IndStart = names.index('WiFi_T1')
+                                                        IndEnd = names.index('WiFi_H1')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD1 detected"
+
+                                                #Do filtering for WD2
+                                                if allsignals[names.index('WiFi_T2')] == 0 and allsignals[names.index('WiFi_H2')] == 0:
+                                                        IndStart = names.index('WiFi_T2')
+                                                        IndEnd = names.index('WiFi_H2')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD2 detected"
+
+                                                #Do filtering for WD3
+                                                if allsignals[names.index('WiFi_T3')] == 0 and allsignals[names.index('WiFi_H3')] == 0:
+                                                        IndStart = names.index('WiFi_T3')
+                                                        IndEnd = names.index('WiFi_H3')+1 #Go one index ahead, that the last value is also changed
+                                                        #Create an list of Nones
+                                                        NoneBuf = [None] * (IndEnd-IndStart)
+                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        allsignals[IndStart:IndEnd] = NoneBuf
+                                                        if EnableDebug == 1:
+                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD3 detected"
+                                                                
+                                except:
+                                                if EnableDebug == 1:
+                                                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during validy check of data"
+
+                                                if EnableErrorLog == 1:
+                                                        with open(ErrorLog,'a') as err:
+                                                                err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during validy check of data\n")
+                                                                
+                                                                
+                                #walk through all signals received and copy the ones which should be logged to the corresponding list
+                                #orgname index
+                                x=0
+                                #Signal array
+                                signals = []
+                                exp_signals = []
+                                while x < CompSignalCount:
+
+                                        if(x==0):
+                                                signals.append(allsignals[x])
+                                                exp_signals.append(allsignals[x])
+                                        #Convert signals
+                                        else:
+                                                #Copy the signals
+                                                if loginfo[x] == '1':
+                                                        signals.append(allsignals[x])
+                                                if exportinfo[x] == '1':
+                                                        exp_signals.append(allsignals[x])
+                                        
+                                        #move orgname index
+                                        x = x+1
+                                        
+
                                 #Handle calculation variables
                                 #++++++++++++++Parser has to be implemented here+++++++++++++++++#
                                 if ExtraCalcVar > 0:
                                         ExtraCalc = list()
                                         formulaError=0
                                         try:
-                                                if allsignals[names.index('PacketsSentPerHour_0')]!=0:
+                                                if allsignals[names.index('PacketsSentPerHour_0')] > 0:
                                                         ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX0')]/allsignals[names.index('PacketsSentPerHour_0')])
                                                 else:
                                                         ExtraCalc.append(None)
                                                 formulaError = formulaError+1
 
-                                                if allsignals[names.index('PacketsSentPerHour_1')]!=0:
+                                                if allsignals[names.index('PacketsSentPerHour_1')] > 0:
                                                         ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX1')]/allsignals[names.index('PacketsSentPerHour_1')])
                                                 else:
                                                         ExtraCalc.append(None)
                                                 formulaError = formulaError+1
                                                         
-                                                if allsignals[names.index('PacketsSentPerHour_2')]!=0:
+                                                if allsignals[names.index('PacketsSentPerHour_2')] > 0:
                                                         ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX2')]/allsignals[names.index('PacketsSentPerHour_2')])
                                                 else:
                                                         ExtraCalc.append(None)
                                                 formulaError = formulaError+1
 
-                                                if allsignals[names.index('PacketsSentPerHour_3')]!=0:
+                                                if allsignals[names.index('PacketsSentPerHour_3')] > 0:
                                                         ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX3')]/allsignals[names.index('PacketsSentPerHour_3')])
                                                 else:
                                                         ExtraCalc.append(None)
                                                 formulaError = formulaError+1
 
-                                                ExtraCalc.append(allsignals[names.index('TotalRain_tips_0')]*allsignals[names.index('COLLECTOR_TYPE_0')])
+                                                if allsignals[names.index('COLLECTOR_TYPE_0')] > 0:
+                                                        ExtraCalc.append(allsignals[names.index('TotalRain_tips_0')]*allsignals[names.index('COLLECTOR_TYPE_0')])
+                                                else:
+                                                        ExtraCalc.append(None)
                                                 formulaError = formulaError+1
-                                                ExtraCalc.append(allsignals[names.index('Rainftipshour_0')]*allsignals[names.index('COLLECTOR_TYPE_0')])
+
+                                                if allsignals[names.index('COLLECTOR_TYPE_0')] > 0:                                                
+                                                        ExtraCalc.append(allsignals[names.index('Rainftipshour_0')]*allsignals[names.index('COLLECTOR_TYPE_0')])
+                                                else:
+                                                        ExtraCalc.append(None)
                                                 formulaError = formulaError+1
-                                                ExtraCalc.append(allsignals[names.index('TotalRain_tips_1')]*allsignals[names.index('COLLECTOR_TYPE_1')])
+
+                                                if allsignals[names.index('COLLECTOR_TYPE_1')] > 0:  
+                                                        ExtraCalc.append(allsignals[names.index('TotalRain_tips_1')]*allsignals[names.index('COLLECTOR_TYPE_1')])
+                                                else:
+                                                        ExtraCalc.append(None)
                                                 formulaError = formulaError+1
-                                                ExtraCalc.append(allsignals[names.index('Rainftipshour_1')]*allsignals[names.index('COLLECTOR_TYPE_1')])
+
+                                                if allsignals[names.index('COLLECTOR_TYPE_1')] > 0:  
+                                                        ExtraCalc.append(allsignals[names.index('Rainftipshour_1')]*allsignals[names.index('COLLECTOR_TYPE_1')])
+                                                else:
+                                                        ExtraCalc.append(None)
                                                 formulaError = formulaError+1
-                                                ExtraCalc.append(allsignals[names.index('TotalRain_tips_2')]*allsignals[names.index('COLLECTOR_TYPE_2')])
+
+                                                if allsignals[names.index('COLLECTOR_TYPE_2')] > 0:  
+                                                        ExtraCalc.append(allsignals[names.index('TotalRain_tips_2')]*allsignals[names.index('COLLECTOR_TYPE_2')])
+                                                else:
+                                                        ExtraCalc.append(None)
                                                 formulaError = formulaError+1
-                                                ExtraCalc.append(allsignals[names.index('Rainftipshour_2')]*allsignals[names.index('COLLECTOR_TYPE_2')])
+
+                                                if allsignals[names.index('COLLECTOR_TYPE_2')] > 0:                                                  
+                                                        ExtraCalc.append(allsignals[names.index('Rainftipshour_2')]*allsignals[names.index('COLLECTOR_TYPE_2')])
+                                                else:
+                                                        ExtraCalc.append(None)
                                                 formulaError = formulaError+1
-                                                ExtraCalc.append(allsignals[names.index('TotalRain_tips_3')]*allsignals[names.index('COLLECTOR_TYPE_3')])
+
+                                                if allsignals[names.index('COLLECTOR_TYPE_3')] > 0:                                                 
+                                                        ExtraCalc.append(allsignals[names.index('TotalRain_tips_3')]*allsignals[names.index('COLLECTOR_TYPE_3')])
+                                                else:
+                                                        ExtraCalc.append(None)
                                                 formulaError = formulaError+1
-                                                ExtraCalc.append(allsignals[names.index('Rainftipshour_3')]*allsignals[names.index('COLLECTOR_TYPE_3')])
+
+                                                if allsignals[names.index('COLLECTOR_TYPE_3')] > 0:  
+                                                        ExtraCalc.append(allsignals[names.index('Rainftipshour_3')]*allsignals[names.index('COLLECTOR_TYPE_3')])
+                                                else:
+                                                        ExtraCalc.append(None)
+                                                        
                                         except:
                                                 if EnableDebug == 1:
                                                         print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error in calculation formula at position " + str(formulaError)
