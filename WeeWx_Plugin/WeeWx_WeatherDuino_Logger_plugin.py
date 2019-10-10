@@ -122,17 +122,21 @@ class WeeWxService(StdService):
                     #Handle all other signals
                     else:
                         #Try to perform an automatic unit conversion into the chosen target system in WeeWx
-                        try:
-                            #Create temporary value tuple for WeeWx integrated unit conversion
-                            temp_vt = weewx.units.ValueTuple(float(values[n+1]), str(unittype[n+1]), str(units[n+1]))
-                            #Augment data to archive record with the appropriately converted value
-                            event.record[str(names[n+1])] = weewx.units.convertStd(temp_vt, event.record['usUnits'])[0]
-                            #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: " + str(names[n+1]) + ": " + str(values[n+1]))
-                        #if the automatic conversion fails, just augment the data as it is and rise an error
-                        except:
-                            event.record[str(names[n+1])] = float(values[n+1])
-                            syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Not able to convert the signal " + str(names[n+1])+". Check if unit group " + str(units[n+1]) + " contains an unit type called " + str(unittype[n+1]) + ".")
-                        
+                        if values[n+1] != "None":  
+                            try:     
+                                #Create temporary value tuple for WeeWx integrated unit conversion
+                                temp_vt = weewx.units.ValueTuple(float(values[n+1]), str(unittype[n+1]), str(units[n+1]))
+                                #Augment data to archive record with the appropriately converted value
+                                event.record[str(names[n+1])] = weewx.units.convertStd(temp_vt, event.record['usUnits'])[0]
+                                #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: " + str(names[n+1]) + ": " + str(values[n+1]))
+                            #if the automatic conversion fails, just augment the data as it is and rise an error
+                            except:
+                                event.record[str(names[n+1])] = float(values[n+1])
+
+                                syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Not able to convert the signal " + str(names[n+1])+". Check if unit group " + str(units[n+1]) + " contains an unit type called " + str(unittype[n+1]) + ".")
+                        else:
+                            event.record[str(names[n+1])] = None
+                            
             #Else throw an exception that the data is too old
             else:
                 syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Data is too old. Check logging addon!")
