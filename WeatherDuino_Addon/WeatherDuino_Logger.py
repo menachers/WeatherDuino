@@ -30,6 +30,7 @@ EnableMail = 0
 #Enables WeeWx Export
 EnableWeeWx = 1
 #Enables removing non valid values because of not updated data in the RX module
+#Be aware when using the AQM with no CO2 sensor because this is also a criteria for valid data
 EnableValidyCheck = 1
 
 #Time in sec after the last successful logging event the extra data collector is executed
@@ -542,8 +543,12 @@ try:
                                                         IndEnd = names.index('COLLECTOR_TYPE_0')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
+                                                        #Also mark calculated signals as invalid
+                                                        allsignals[names.index('Signal_Quality_TX0')] = None
+                                                        allsignals[names.index('Rain_TX0')] = None
+                                                        allsignals[names.index('Rain_Rate_TX0')] = None
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX0 detected"
                                                         
@@ -553,8 +558,12 @@ try:
                                                         IndEnd = names.index('COLLECTOR_TYPE_1')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
+                                                        #Also mark calculated signals as invalid
+                                                        allsignals[names.index('Signal_Quality_TX1')] = None
+                                                        allsignals[names.index('Rain_TX1')] = None
+                                                        allsignals[names.index('Rain_Rate_TX1')] = None
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX1 detected"
                                                         
@@ -564,8 +573,12 @@ try:
                                                         IndEnd = names.index('COLLECTOR_TYPE_2')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
+                                                        #Also mark calculated signals as invalid
+                                                        allsignals[names.index('Signal_Quality_TX2')] = None
+                                                        allsignals[names.index('Rain_TX2')] = None
+                                                        allsignals[names.index('Rain_Rate_TX2')] = None
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX2 detected"
                                                         
@@ -575,18 +588,22 @@ try:
                                                         IndEnd = names.index('COLLECTOR_TYPE_3')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
+                                                        #Also mark calculated signals as invalid
+                                                        allsignals[names.index('Signal_Quality_TX3')] = None
+                                                        allsignals[names.index('Rain_TX3')] = None
+                                                        allsignals[names.index('Rain_Rate_TX3')] = None
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX3 detected"
 
-                                                #Do filtering for AQM
-                                                if allsignals[names.index('AQI_Index')] == 0:
+                                                #Do filtering for AQM check if AQI or CO2 is 0
+                                                if allsignals[names.index('AQI_Index')] == 0 or allsignals[names.index('GAS_1')] == 0 or (allsignals[names.index('AQI_Temp')] == 0 and allsignals[names.index('AQI_Hum')] == 0):
                                                         IndStart = names.index('AQI_PM1_0')
                                                         IndEnd = names.index('GAS_2')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for AQM detected"
@@ -597,7 +614,7 @@ try:
                                                         IndEnd = names.index('Leaf_Wetness4')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for Soil/Leaf detected"
@@ -608,7 +625,7 @@ try:
                                                         IndEnd = names.index('WiFi_H0')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD0 detected"
@@ -619,7 +636,7 @@ try:
                                                         IndEnd = names.index('WiFi_H1')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD1 detected"
@@ -630,7 +647,7 @@ try:
                                                         IndEnd = names.index('WiFi_H2')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD2 detected"
@@ -641,7 +658,7 @@ try:
                                                         IndEnd = names.index('WiFi_H3')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
-                                                        #Copy the Nones onto the corresponding listentrys which are not valid
+                                                        #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD3 detected"
