@@ -26,7 +26,7 @@ EnableErrorLog = 1
 #Enables E-Mail notifications in case of a lost datastream
 #Mail settings have to be performed below
 #Please be aware of some routers blocking mails to be sent from unknown servers
-EnableMail = 0
+EnableMail = 1
 #Enables WeeWx Export
 EnableWeeWx = 1
 #Enables removing non valid values because of not updated data in the RX module
@@ -41,19 +41,19 @@ CollectDelay = 10
 # The script can send an email to a specified receiver when data transmission stops
 #
 # mail address of the sender
-sender = 'sender@hoster.com'
+sender = 'replace_me'
 
 # mail address of the receiver
-receiver = 'receiver@hoster.com'
+receiver = 'replace_me'
 
 # fully qualified domain name of the mail server
-smtpserver = 'smtp_of_sender'
+smtpserver = 'replace_me'
 
 # username for the SMTP authentication
-smtpusername = 'username_of_sender'
+smtpusername = 'replace_me'
 
 # password for the SMTP authentication
-smtppassword = 'password_of_sender'
+smtppassword = 'replace_me'
 
 # use TLS encryption for the connection
 usetls = True
@@ -598,8 +598,8 @@ try:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX3 detected"
 
                                                 #Do filtering for AQM check if AQI or CO2 is 0
-                                                if allsignals[names.index('AQI_Index')] == 0 or allsignals[names.index('GAS_1')] == 0 or (allsignals[names.index('AQI_Temp')] == 0 and allsignals[names.index('AQI_Hum')] == 0):
-                                                        IndStart = names.index('AQI_PM1_0')
+                                                if allsignals[names.index('AQM_Index')] == 0 or allsignals[names.index('GAS_1')] == 0 or (allsignals[names.index('AQM_Temp')] == 0 and allsignals[names.index('AQM_Hum')] == 0):
+                                                        IndStart = names.index('AQM_PM1_0')
                                                         IndEnd = names.index('GAS_2')+1 #Go one index ahead, that the last value is also changed
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
