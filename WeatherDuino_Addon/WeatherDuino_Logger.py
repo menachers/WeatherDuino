@@ -531,6 +531,8 @@ try:
                                 #print 'Datetime UTC:' + str(datetime.fromtimestamp(int(struct.unpack("L", ''.join(data[0:4]))[0]), tz=pytz.UTC).strftime('%Y-%m-%d %H:%M:%S'))
 
                                 try:
+                                        position = -1
+                                        
                                         #Do signal validation according to a defined scheme and remove invalid datasets if necesseray. This might happen if the RX module is rebooted
                                         if EnableValidyCheck == 1:
                                                 #Criteria to set all signales received from a specific TX source to None
@@ -546,11 +548,12 @@ try:
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         #Also mark calculated signals as invalid
-                                                        allsignals[names.index('Signal_Quality_TX0')] = None
-                                                        allsignals[names.index('Rain_TX0')] = None
-                                                        allsignals[names.index('Rain_Rate_TX0')] = None
+                                                        #allsignals[names.index('Signal_Quality_TX0')] = None
+                                                        #allsignals[names.index('Rain_TX0')] = None
+                                                        #allsignals[names.index('Rain_Rate_TX0')] = None
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX0 detected"
+                                                position = 0
                                                         
                                                 #Do filtering for TX1
                                                 if allsignals[names.index('PacketsSentPerHour_1')] == 0:
@@ -561,11 +564,12 @@ try:
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         #Also mark calculated signals as invalid
-                                                        allsignals[names.index('Signal_Quality_TX1')] = None
-                                                        allsignals[names.index('Rain_TX1')] = None
-                                                        allsignals[names.index('Rain_Rate_TX1')] = None
+                                                        #allsignals[names.index('Signal_Quality_TX1')] = None
+                                                        #allsignals[names.index('Rain_TX1')] = None
+                                                        #allsignals[names.index('Rain_Rate_TX1')] = None
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX1 detected"
+                                                position = 1                                              
                                                         
                                                 #Do filtering for TX2
                                                 if allsignals[names.index('PacketsSentPerHour_2')] == 0:
@@ -576,11 +580,12 @@ try:
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         #Also mark calculated signals as invalid
-                                                        allsignals[names.index('Signal_Quality_TX2')] = None
-                                                        allsignals[names.index('Rain_TX2')] = None
-                                                        allsignals[names.index('Rain_Rate_TX2')] = None
+                                                        #allsignals[names.index('Signal_Quality_TX2')] = None
+                                                        #allsignals[names.index('Rain_TX2')] = None
+                                                        #allsignals[names.index('Rain_Rate_TX2')] = None
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX2 detected"
+                                                position = 2
                                                         
                                                 #Do filtering for TX3
                                                 if allsignals[names.index('PacketsSentPerHour_3')] == 0:
@@ -591,11 +596,12 @@ try:
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         #Also mark calculated signals as invalid
-                                                        allsignals[names.index('Signal_Quality_TX3')] = None
-                                                        allsignals[names.index('Rain_TX3')] = None
-                                                        allsignals[names.index('Rain_Rate_TX3')] = None
+                                                        #allsignals[names.index('Signal_Quality_TX3')] = None
+                                                        #allsignals[names.index('Rain_TX3')] = None
+                                                        #allsignals[names.index('Rain_Rate_TX3')] = None
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX3 detected"
+                                                position = 3
 
                                                 #Do filtering for AQM check if AQI or CO2 is 0
                                                 if allsignals[names.index('AQM_Index')] == 0 or allsignals[names.index('GAS_1')] == 0 or (allsignals[names.index('AQM_Temp')] == 0 and allsignals[names.index('AQM_Hum')] == 0):
@@ -607,6 +613,7 @@ try:
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for AQM detected"
+                                                position = 4
 
                                                 #Do filtering for Soil / Leaf - check two soil temperatures since is very unlikely that both are 0.0 (if you have only one sensor installed it might happen that good data is cut out
                                                 if allsignals[names.index('Soil_Temp1')] and allsignals[names.index('Soil_Temp2')] == 0:
@@ -618,6 +625,7 @@ try:
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for Soil/Leaf detected"
+                                                position = 5
 
                                                 #Do filtering for WD0
                                                 if allsignals[names.index('WiFi_T0')] == 0 and allsignals[names.index('WiFi_H0')] == 0:
@@ -629,6 +637,7 @@ try:
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD0 detected"
+                                                position = 6
 
                                                 #Do filtering for WD1
                                                 if allsignals[names.index('WiFi_T1')] == 0 and allsignals[names.index('WiFi_H1')] == 0:
@@ -640,6 +649,7 @@ try:
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD1 detected"
+                                                position = 7
 
                                                 #Do filtering for WD2
                                                 if allsignals[names.index('WiFi_T2')] == 0 and allsignals[names.index('WiFi_H2')] == 0:
@@ -651,6 +661,7 @@ try:
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD2 detected"
+                                                position = 8
 
                                                 #Do filtering for WD3
                                                 if allsignals[names.index('WiFi_T3')] == 0 and allsignals[names.index('WiFi_H3')] == 0:
@@ -662,14 +673,15 @@ try:
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
                                                                 print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD3 detected"
+                                                position = 9
                                                                 
                                 except:
                                                 if EnableDebug == 1:
-                                                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during validy check of data"
+                                                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during validy check of data at position " + str(position) +"."
 
                                                 if EnableErrorLog == 1:
                                                         with open(ErrorLog,'a') as err:
-                                                                err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during validy check of data\n")
+                                                                err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during validy check of data at position " + str(position) + "\n")
                                                                 
                                                                 
                                 #walk through all signals received and copy the ones which should be logged to the corresponding list
