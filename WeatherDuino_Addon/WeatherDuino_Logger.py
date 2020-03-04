@@ -2,7 +2,6 @@
 # -*- coding: utf8 -*-
 from datetime import datetime
 from datetime import timedelta
-from email.mime.text import MIMEText
 import pytz
 import time
 import serial
@@ -55,7 +54,7 @@ smtpusername = 'replace_me'
 # password for the SMTP authentication
 smtppassword = 'replace_me'
 
-# use TLS encryption for the connection
+# use TLS encryption for the connection as default
 usetls = True
 
 ### --- Do not change anything beyond this point --- ###
@@ -67,7 +66,7 @@ mailSent = 0
 CollectorExecuted = 0
 
 print "WeatherDuino data reveiving and logging script"
-print "Version 4.0"
+print "Version 4.1"
 print "Logfile name: ", Logfile
 print "Used signal description file: ", HeaderName
 if EnableErrorLog == 1:
@@ -424,26 +423,28 @@ try:
                                 last_c = c
                                 ErrorCode = 15
 
-                                #Check if there was now logdata sucessfully written since 10 minutes
+                                #Check if there was no logdata sucessfully written since 10 minutes
                                 if (datetime.now()-timebuffer) > timedelta(minutes=10) and EnableMail == 1:
+                                        NotificationFlag = 0
                                         if mailSent == 0:
                                                 try:
 						# call sendmail() and generate a new mail with specified subject and content
                                                         if EnableDebug == 1:
                                                                 print "Sending Email."
-                                                        sendmail(str(receiver),'Wetterstation error',str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) + ' No data is logged since 10 minutes')
+                                                        sendmail(usetls, str(smtppassword),str(smtpusername),str(smtpserver),str(sender),str(receiver),'Wetterstation error',str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) + ' No data is logged since 10 minutes')
                                                         if EnableErrorLog == 1:
                                                                 with open(ErrorLog,'a') as err:
                                                                         err.write (str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) +" Mail sent to " + str(receiver) + "\n")
-                                                                        mailSent = 1
+                                                        mailSent = 1
                                                 except:
                                                         if EnableErrorLog == 1:
                                                                 with open(ErrorLog,'a') as err:
                                                                         err.write (str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) +" Mail could not be sent. \n")
-                                                                        mailSent = 1
+                                                        mailSent = 1
                                         else:
-                                                if EnableDebug == 1:
+                                                if EnableDebug == 1 and NotificationFlag == 0:
                                                         print "Mail already sent."
+                                                        NotificationFlag = 1
                         except:
                                 #Something has gone wrong probably at receiving data
                                 if EnableDebug == 1:
@@ -714,25 +715,41 @@ try:
                                         formulaError=0
                                         try:
                                                 if allsignals[names.index('PacketsSentPerHour_0')] > 0:
-                                                        ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX0')]/allsignals[names.index('PacketsSentPerHour_0')])
+                                                        SignalQuality0 = allsignals[names.index('AVG_Rcv_RX0')]/allsignals[names.index('PacketsSentPerHour_0')]
+                                                        if SignalQuality0 <= 1:
+                                                                ExtraCalc.append(SignalQuality0)
+                                                        else:
+                                                                ExtraCalc.append(None)
                                                 else:
                                                         ExtraCalc.append(None)
                                                 formulaError = formulaError+1
 
                                                 if allsignals[names.index('PacketsSentPerHour_1')] > 0:
-                                                        ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX1')]/allsignals[names.index('PacketsSentPerHour_1')])
+                                                        SignalQuality1 = allsignals[names.index('AVG_Rcv_RX1')]/allsignals[names.index('PacketsSentPerHour_1')]
+                                                        if SignalQuality1 <= 1:
+                                                                ExtraCalc.append(SignalQuality1)
+                                                        else:
+                                                                ExtraCalc.append(None)
                                                 else:
                                                         ExtraCalc.append(None)
                                                 formulaError = formulaError+1
                                                         
                                                 if allsignals[names.index('PacketsSentPerHour_2')] > 0:
-                                                        ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX2')]/allsignals[names.index('PacketsSentPerHour_2')])
+                                                        SignalQuality2 = allsignals[names.index('AVG_Rcv_RX2')]/allsignals[names.index('PacketsSentPerHour_2')]
+                                                        if SignalQuality2 <= 1:
+                                                                ExtraCalc.append(SignalQuality2)
+                                                        else:
+                                                                ExtraCalc.append(None)
                                                 else:
                                                         ExtraCalc.append(None)
                                                 formulaError = formulaError+1
 
                                                 if allsignals[names.index('PacketsSentPerHour_3')] > 0:
-                                                        ExtraCalc.append(allsignals[names.index('AVG_Rcv_RX3')]/allsignals[names.index('PacketsSentPerHour_3')])
+                                                        SignalQuality3 = allsignals[names.index('AVG_Rcv_RX3')]/allsignals[names.index('PacketsSentPerHour_3')]
+                                                        if SignalQuality3 <= 1:
+                                                                ExtraCalc.append(SignalQuality3)
+                                                        else:
+                                                                ExtraCalc.append(None)
                                                 else:
                                                         ExtraCalc.append(None)
                                                 formulaError = formulaError+1
