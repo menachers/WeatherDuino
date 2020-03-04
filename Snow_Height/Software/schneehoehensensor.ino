@@ -5,17 +5,17 @@
   The mounting height is stored at the EEPROM and can be set or overwritten with the acutal measured value by pushing the tare button.
   Be careful, that for correct calculation of the tare value the right mounting angle has already do be specified and the underground has to be free of snow.
 
-  The range of the transmitted data for the snow height is between 0 and 100 [cm] or [dm] be careful that measurements below or above that values might be cut.
+  The range of the transmitted data for the snow height is between 0 and 100 [cm] or [dm] be careful that measurements below or above that values are cut.
 
-  The measurement results are provided via I²C over a emulated HU21D temperature sensor.
+  The measurement results are provided via I²C over a emulated HU21D/SHT temperature sensor.
 
   Board compatibility              : snow height measurement >4.0
 
   TX Boards compatibility          : Each WeatherDuino TX Board supporting the HU21D temperature sensor
 
-  Software Version      : 4.2 (Compile using Arduino IDE 1.8.3 or newer)
-  Version Released date : 10/10/2018
-  Last revision date    : 03/01/2019
+  Software Version      : 5.0 (Compile using Arduino IDE 1.8.3 or newer)
+  Version Released date : 12/29/2019
+  Last revision date    : 12/29/2019
   Licence               : GNU GPLv3
   Author                : engolling
   Support Forum         : http://www.meteocercal.info/forum
@@ -28,7 +28,7 @@
   License:GNU General Public License v3.0
 
     WeatherDuino Pro2 Snow height measurement software
-    Copyright (C) 2018  engolling - www.meteocercal.info/forum
+    Copyright (C) 2019  engolling - www.meteocercal.info/forum
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ int eeAddress = 0;              // holds EEprom adress of stored tare value
 //Variable for state machine
 uint8_t state = 1;              // 1 = starting up, 0 = waiting for answer, 2 = filling filter, 3 = normal operation
 // I2C messages are only sent in state 3
-uint8_t initRunCtr = 0;         // Conter for initially filling the median filter
+uint8_t initRunCtr = 0;         // Counter for initially filling the median filter
 uint8_t state_trigger = 0;      // timing variable for reading status message in between the distance readings
 
 int setupHeight;                // height in mm where the sensor is mounted over ground
@@ -122,12 +122,12 @@ void setup() {
 #endif
   //Start up software serial to communicate with the laser device
 #if VERBOSE > 0
-  Serial.println("Init software serial for laser");
+  Serial.println(F("Init software serial for laser"));
 #endif
 #if LASER_DEVICE == 1
   Laser.begin(19200);
 #if VERBOSE > 0
-  Serial.println("Success for HIREED device");
+  Serial.println(F("Success for HIREED device"));
 #endif
 #elif LASER_DEVICE == 2
   Laser.begin(38400);
@@ -135,7 +135,7 @@ void setup() {
   laser_send_data.bytes.preamble = 0xAA;
   laser_send_data.bytes.command = 0x03;
 #if VERBOSE > 0
-  Serial.println("Success for HOLO device");
+  Serial.println(F("Success for HOLO device"));
 #endif
 #endif
   //Start up I²C and register interrupt routines
@@ -147,9 +147,9 @@ void setup() {
   //Retrieve setup height from EEprom
   EEPROM.get(eeAddress, setupHeight);
 #if VERBOSE > 0
-  Serial.print("Getting setup height from EEPROM: ");
+  Serial.print(F("Getting setup height from EEPROM: "));
   Serial.print(setupHeight);
-  Serial.println(" mm");
+  Serial.println(F(" mm"));
 #endif
   //Setup pin mode for tare pin
   pinMode(TAREPIN, INPUT_PULLUP);
@@ -165,7 +165,7 @@ void loop() {
     setupHeight = filter.getMedian();
     EEPROM.put(eeAddress, setupHeight);
 #if VERBOSE > 0
-    Serial.print("New tare value written to EEPROM: ");
+    Serial.print(F("New tare value written to EEPROM: "));
     Serial.println(setupHeight);
 #endif
     delay(1000);
@@ -201,13 +201,13 @@ void loop() {
     if (initRunCtr == 0) {
       state = 2; //Since status is not available with the HOLO laser jump to the distance reading
     }
-    Serial.println("No status message available with HOLO Laser");
+    Serial.println(F("No status message available when HOLO Laser is configured"));
 #endif
   }
 
   //If debug mode is enabled allow routing messages through hardware serial
 #if VERBOSE > 0
-  if (Serial.available()) {           // If anything comes in the serial (USB) bus,
+  if (Serial.available()) {           // If anything comes from the serial (USB) bus,
     Laser.write(Serial.read());       // read it and send it out to laser
   }
 #endif
@@ -215,7 +215,7 @@ void loop() {
 if ((millis() - RcvTimeout > TIMEOUT) && state == 0 && ErrMsg == 0){
   ErrMsg = 1;
   #if VERBOSE > 0
-      Serial.println("Nothing received from Laser device. Check wiring");
+      Serial.println(F("Nothing received from Laser device. Check wiring"));
   #endif
 }
 

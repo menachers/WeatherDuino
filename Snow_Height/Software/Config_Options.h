@@ -19,9 +19,14 @@
 #define ALPHA 10
 
 // --------------------------------------------------------------------------------------------
-//   Define I²C slave adress for the emulated HTU21D sensor
+//   Define temperature sensor which should be emulated
 // --------------------------------------------------------------------------------------------
-#define I2C_SLAVE_ADR 0x40
+#define SENSOR 1    //0 for HTU, 1 for SHT3X
+
+// --------------------------------------------------------------------------------------------
+//   Define I²C slave adress for the emulated temperature sensor
+// --------------------------------------------------------------------------------------------
+#define I2C_SLAVE_ADR 0x44
 
 // --------------------------------------------------------------------------------------------
 // Define number of running median filter samples
@@ -43,4 +48,4 @@
 // --------------------------------------------------------------------------------------------
 // Enable debugging messages via serial monitor
 // --------------------------------------------------------------------------------------------
-#define VERBOSE 0    // 2 all messages, 1 overview, 0 all messages off
+#define VERBOSE 2    // 2 all messages, 1 overview, 0 all messages off
