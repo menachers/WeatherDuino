@@ -19,6 +19,14 @@ with open(filename) as f:
 for n in range(len(names)-1):
     if str(unit_groups[n+1]) != 'none':
         weewx.units.obs_group_dict[str(names[n+1])] = str(unit_groups[n+1])
+        syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Unit " + str(unit_groups[n+1]) + " attached to signal " + str(names[n+1]))
+
+#weewx.units.obs_group_dict['rain_RG11'] = 'group_rain'
+#syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Unit " + 'group_rain' + " attached to signal " + 'rain_RG11')
+
+#if you also have the plugin for the lightning sensor installed
+weewx.units.obs_group_dict['lightning_strikes'] = 'group_count'
+weewx.units.obs_group_dict['avg_distance'] = 'group_distance'
     
 weewx.units.USUnits['group_gas_concentration'] = 'ppm'
 weewx.units.MetricUnits['group_gas_concentration'] = 'ppm'
@@ -31,6 +39,12 @@ weewx.units.MetricUnits['group_dust'] = 'microgramm_per_meter_cubic'
 weewx.units.MetricWXUnits['group_dust'] = 'microgramm_per_meter_cubic'
 weewx.units.default_unit_format_dict['microgramm_per_meter_cubic']  = '%.1f'
 weewx.units.default_unit_label_dict['microgramm_per_meter_cubic']  = ' \xce\xbcg/m\xc2\xb3'
+
+weewx.units.USUnits['group_illumination'] = 'lux'
+weewx.units.MetricUnits['group_illumination'] = 'lux'
+weewx.units.MetricWXUnits['group_illumination'] = 'lux'
+weewx.units.default_unit_format_dict['lux']  = '%.0f'
+weewx.units.default_unit_label_dict['lux']  = ' lux'
 
 ####################################################################################
 
@@ -102,7 +116,7 @@ class WeeWxService(StdService):
                             deltarain = None
 
                         #Check the integrity of the data maybe the rain counter of the WeatherDuino has run over or other strange things happened causing ghost rain
-                        if deltarain < 0 or deltarain > 30:
+                        if deltarain != None and (deltarain < 0 or deltarain > 30):
                             deltarain = None
 
                         #Try to perform an automatic unit conversion into the chosen target system in WeeWx
@@ -141,7 +155,7 @@ class WeeWxService(StdService):
             else:
                 syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Data is too old. Check logging addon!")
 
-        except Exception, e:
+        except(Exception):
             if error_ind >= 0:
                 syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Processing error at positon " + str(error_ind)+ ": " + str(names[error_ind+1]))
             else:
