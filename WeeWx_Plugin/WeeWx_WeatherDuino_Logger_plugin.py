@@ -1,10 +1,44 @@
-import syslog
 import weewx
 from datetime import datetime
 from time import strptime
 from time import mktime
 from weewx.wxengine import StdService
 import weewx.units
+
+#import logging capabilities
+try:
+    # Test for new-style weewx logging by trying to import weeutil.logger
+    import weeutil.logger
+    import logging
+    log = logging.getLogger('WeatherDuino')
+    version = 4
+
+    def logdbg(msg):
+        log.debug(msg)
+
+    def loginf(msg):
+        log.info(msg)
+
+    def logerr(msg):
+        log.error(msg)
+
+except ImportError:
+    # Old-style weewx logging
+    import syslog
+    version = 3
+
+    def logmsg(level, msg):
+        # Replace '__name__' with something to identify your application.
+        syslog.syslog(level, '%s:' % msg)
+
+    def logdbg(msg):
+        logmsg(syslog.LOG_DEBUG, msg)
+
+    def loginf(msg):
+        logmsg(syslog.LOG_INFO, msg)
+
+    def logerr(msg):
+        logmsg(syslog.LOG_ERR, msg)
 
 #First read units from unit line of the export file
 filename = '/home/pi/WeatherDuino/WeeWx_Exp.txt'
@@ -19,10 +53,10 @@ with open(filename) as f:
 for n in range(len(names)-1):
     if str(unit_groups[n+1]) != 'none':
         weewx.units.obs_group_dict[str(names[n+1])] = str(unit_groups[n+1])
-        syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Unit " + str(unit_groups[n+1]) + " attached to signal " + str(names[n+1]))
+        logdbg("Unit " + str(unit_groups[n+1]) + " attached to signal " + str(names[n+1]))
 
 #weewx.units.obs_group_dict['rain_RG11'] = 'group_rain'
-#syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Unit " + 'group_rain' + " attached to signal " + 'rain_RG11')
+#logdbg(Unit " + 'group_rain' + " attached to signal " + 'rain_RG11')
 
 #if you also have the plugin for the lightning sensor installed
 weewx.units.obs_group_dict['lightning_strikes'] = 'group_count'
@@ -38,7 +72,10 @@ weewx.units.USUnits['group_dust'] = 'microgramm_per_meter_cubic'
 weewx.units.MetricUnits['group_dust'] = 'microgramm_per_meter_cubic'
 weewx.units.MetricWXUnits['group_dust'] = 'microgramm_per_meter_cubic'
 weewx.units.default_unit_format_dict['microgramm_per_meter_cubic']  = '%.1f'
-weewx.units.default_unit_label_dict['microgramm_per_meter_cubic']  = ' \xce\xbcg/m\xc2\xb3'
+if version == 3:
+    weewx.units.default_unit_label_dict['microgramm_per_meter_cubic']  = ' \xce\xbcg/m\xc2\xb3'
+else:
+    weewx.units.default_unit_label_dict['microgramm_per_meter_cubic']  = ' µg/m³'
 
 weewx.units.USUnits['group_illumination'] = 'lux'
 weewx.units.MetricUnits['group_illumination'] = 'lux'
@@ -53,7 +90,7 @@ class WeeWxService(StdService):
         super(WeeWxService, self).__init__(engine, config_dict)      
         d = config_dict.get('WeatherDuino_logger_service', {})
         self.filename = d.get('filename', '/home/pi/WeatherDuino/WeeWx_Exp.txt')
-        syslog.syslog(syslog.LOG_INFO, "WeatherDuino: using %s" % self.filename)
+        loginf("using %s" % self.filename)
         self.bind(weewx.NEW_ARCHIVE_RECORD, self.read_file)
         self.last_rain = [None, None, None, None]
     
@@ -73,20 +110,20 @@ class WeeWxService(StdService):
                     if line == 3:
                         values = row.strip().split(";")
 
-            syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Unit of record to be archived: " + str(event.record['usUnits']))                        
+            logdbg("Unit of record to be archived: " + str(event.record['usUnits']))                        
 
             #Read timestamp of data and convert it
             timestamp = strptime(values[0], '%Y-%m-%d %H:%M:%S')
             dt = datetime.fromtimestamp(mktime(timestamp))
             #Read timestamp of the record and convert it
             archive_dt = datetime.fromtimestamp(event.record['dateTime'])
-            syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Archive timestamp: " + str(archive_dt))
-            syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Data timestamp: " + str(dt))
+            logdbg("Archive timestamp: " + str(archive_dt))
+            logdbg("Data timestamp: " + str(dt))
             
             #Check if read data is not older than 3 minutes
             #if (datetime.now()-dt).total_seconds() < 180:
             if (dt - archive_dt).total_seconds() < 180:
-                syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: Valid values found")
+                logdbg("Valid values found")
 
                 #Create index pointer for last_rain buffer list and error handling
                 rainind=0
@@ -124,12 +161,12 @@ class WeeWxService(StdService):
                             #Create temporary value tuple for WeeWx integrated unit conversion
                             temp_vt = weewx.units.ValueTuple(deltarain, str(unittype[n+1]), str(units[n+1]))              
                             #Augment rain data to archive record with the appropriately converted value
-                            #syslog.syslog(syslog.LOG_DEBUG, "WeatherDuino: " + str(names[n+1]) + ": " + str(deltarain))
+                            #logdbg(str(names[n+1]) + ": " + str(deltarain))
                             event.record[str(names[n+1])] = weewx.units.convertStd(temp_vt, event.record['usUnits'])[0]
                         #if the automatic conversion fails, just augment the data as it is and rise an error
                         except:
                             event.record[str(names[n+1])] = deltarain
-                            syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Not able to convert the signal " + str(names[n+1])+". Check if unit group " + str(units[n+1]) + " contains an unit type called " + str(unittype[n+1]) + ".")
+                            logerr("Not able to convert the signal " + str(names[n+1])+". Check if unit group " + str(units[n+1]) + " contains an unit type called " + str(unittype[n+1]) + ".")
                             
                         #Shift rain index to handle more rain signals                        
                         rainind = rainind + 1
@@ -147,19 +184,19 @@ class WeeWxService(StdService):
                             except:
                                 event.record[str(names[n+1])] = float(values[n+1])
 
-                                syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Not able to convert the signal " + str(names[n+1])+". Check if unit group " + str(units[n+1]) + " contains an unit type called " + str(unittype[n+1]) + ".")
+                                logerr("Not able to convert the signal " + str(names[n+1])+". Check if unit group " + str(units[n+1]) + " contains an unit type called " + str(unittype[n+1]) + ".")
                         else:
                             event.record[str(names[n+1])] = None
                             
             #Else throw an exception that the data is too old
             else:
-                syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Data is too old. Check logging addon!")
+                logerr("Data is too old. Check logging addon!")
 
         except(Exception):
             if error_ind >= 0:
-                syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Processing error at positon " + str(error_ind)+ ": " + str(names[error_ind+1]))
+                logerr("Processing error at positon " + str(error_ind)+ ": " + str(names[error_ind+1]))
             else:
-                syslog.syslog(syslog.LOG_ERR, "WeatherDuino: Initialization error of files. Check correct export file generation in logging script if this keeps happening.")
+                logerr("Initialization error of files. Check correct export file generation in logging script if this keeps happening.")
 
 
 #################################################################################
@@ -174,5 +211,5 @@ schema_WeatherDuino = schemas.wview.schema
 for n in range(len(names)-1):
 	schema_WeatherDuino = schema_WeatherDuino + [(str(names[n+1]), 'REAL')]
 #if you also have the plugin for the lightning sensor installed
-#schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
-#schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
+schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
+schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
