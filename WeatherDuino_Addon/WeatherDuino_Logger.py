@@ -40,19 +40,19 @@ CollectDelay = 10
 # The script can send an email to a specified receiver when data transmission stops
 #
 # mail address of the sender
-sender = 'replace_me'
+sender = 'WeatherDuino@kuntn-forum.de'
 
 # mail address of the receiver
-receiver = 'replace_me'
+receiver = 'stefan.menacher@gmail.com'
 
 # fully qualified domain name of the mail server
-smtpserver = 'replace_me'
+smtpserver = 'kuntn-forum.de'
 
 # username for the SMTP authentication
-smtpusername = 'replace_me'
+smtpusername = 'WeatherDuino@kuntn-forum.de'
 
 # password for the SMTP authentication
-smtppassword = 'replace_me'
+smtppassword = 'Qlor612'
 
 # use TLS encryption for the connection as default
 usetls = True
@@ -65,27 +65,27 @@ mailSent = 0
 
 CollectorExecuted = 0
 
-print "WeatherDuino data reveiving and logging script"
-print "Version 4.1"
-print "Logfile name: ", Logfile
-print "Used signal description file: ", HeaderName
+print ("WeatherDuino data reveiving and logging script")
+print ("Version 4.1")
+print ("Logfile name: ", Logfile)
+print ("Used signal description file: ", HeaderName)
 if EnableErrorLog == 1:
-        print "Error logs enabled!"
-        print "Logfile is saved here:", ErrorLog
+        print ("Error logs enabled!")
+        print ("Logfile is saved here:", ErrorLog)
         with open(ErrorLog,'a') as err:
                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Logging script started.\n")
         
-print ""
-print ("").center(80, "+")
-print "Stop logging with ctrl+c"
-print ("").center(80, "+")
-print ""
+print ("")
+print (("").center(80, "+"))
+print ("Stop logging with ctrl+c")
+print (("").center(80, "+"))
+print ("")
 
 #Open layout file
 try:
         header = open(HeaderName)
 except:
-        print"No layout file found. Exiting."
+        print("No layout file found. Exiting.")
         if EnableErrorLog == 1:
                 with open(ErrorLog,'a') as err:
                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " No signal description file found. Script aborted.\n")
@@ -97,7 +97,7 @@ ExtraCalcVar = 0
 CheckVar = 0
 extraData = list()
 
-print "Start layout file conversion"
+print ("Start layout file conversion")
 #Iterate through all lines of the layout file
 for headerrun,headerline in enumerate(header.readlines()):
         #First get the signal names in the columns
@@ -110,9 +110,9 @@ for headerrun,headerline in enumerate(header.readlines()):
                 for x in range(len(names)):
                         if names[x] == "Termination":
                                 RcvCnt = x+1
-                                print "Waiting for " + str(RcvCnt) + " elements from the WeatherDuino logger."
+                                print ("Waiting for " + str(RcvCnt) + " elements from the WeatherDuino logger.")
                 ExtDataCnt = len(names)-(RcvCnt)
-                print "Number of other expected signals is " + str(ExtDataCnt)+ "."
+                print ("Number of other expected signals is " + str(ExtDataCnt)+ ".")
 
         #Then get the alias names
         if headerrun == 2:
@@ -188,7 +188,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                                         structformat.append("B")
                                         variableLength.append(1)
                                 else:
-                                        print "Warning vartype " + '"'+ str(vartype[x]) + '"' +" in column " + str(x+1) + " can not be parsed!"
+                                        print ("Warning vartype " + '"'+ str(vartype[x]) + '"' +" in column " + str(x+1) + " can not be parsed!")
                                         if EnableErrorLog == 1:
                                                 with open(ErrorLog,'a') as err:
                                                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Warning vartype " + '"'+ str(vartype[x]) + '"' +" in column " + str(x+1) + " can not be parsed!\n")
@@ -201,7 +201,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                                         ExtraImportVar = ExtraImportVar + 1
                                 else:
                                         if EnableDebug == 1:                                
-                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Unknown type of calc or import variables detected."
+                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Unknown type of calc or import variables detected.")
 
                 #Check if everything has been read successfully       
                 bytesum = sum(variableLength)
@@ -209,7 +209,7 @@ for headerrun,headerline in enumerate(header.readlines()):
                 
                 if (ExtraCalcVar + ExtraImportVar + RcvCnt == len(names)):
                         if EnableDebug == 1:                                
-                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Variables parsed and checked sucessfully."
+                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Variables parsed and checked sucessfully.")
                         print("Extra signals: " + str(ExtraImportVar) + " Calculated signals: " + str(ExtraCalcVar))
                 else:
                         print("Extra and calculation variables could not be parsed succesfully! Terminating.")
@@ -226,9 +226,9 @@ for headerrun,headerline in enumerate(header.readlines()):
                 try:
                         factors = [float(x) for x in factors]
                 except:
-                        print "Scaling factor could not be parsed. Check layout file."
-                        print "Use . as decimal separator."
-                        print "Aborting now."
+                        print ("Scaling factor could not be parsed. Check layout file.")
+                        print ("Use . as decimal separator.")
+                        print ("Aborting now.")
                         if EnableErrorLog == 1:
                                 with open(ErrorLog,'a') as err:
                                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Scaling factor could not be parsed. Check layout file.\n")
@@ -273,19 +273,19 @@ for n in range(len(names)):
 try:
         output = open(Logfile,'a+')
 except:
-        print datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " Output file could not be opened. It seems that it is used by another process. Aborting now."
+        print (datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " Output file could not be opened. It seems that it is used by another process. Aborting now.")
         if EnableErrorLog == 1:
                 with open(ErrorLog,'a') as err:
                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Output file could not be opened. It seems that it is used by another process. Aborting now.\n")
         sys.exit(1)
 #Check how much lines are already written in the file
 num_lines = sum(1 for line in output)
-print ""
+print ("")
 if num_lines != 1:
-    print "Logfile " + '"' + str(Logfile) + '"' + " successfully read and " + str(num_lines) + " written lines were detected."
+    print ("Logfile " + '"' + str(Logfile) + '"' + " successfully read and " + str(num_lines) + " written lines were detected.")
 else:
-    print "Logfile " + '"' + str(Logfile) + '"' + " successfully read and " + str(num_lines) + " written line was detected."
-print ""
+    print ("Logfile " + '"' + str(Logfile) + '"' + " successfully read and " + str(num_lines) + " written line was detected.")
+print ("")
 #print "Check if a new logfile is started or an existing logfile was opened:"
 #If there is anything written in the logfile
 if num_lines >0:
@@ -294,19 +294,19 @@ if num_lines >0:
     firstLine = output.readline().strip().split(";")
     #check if headers are matching
     if(firstLine == lognames):
-        print "Existing file detected, new data is appended."
+        print ("Existing file detected, new data is appended.")
     #print warnings if headers are not matching
     else:
-        print ("WARNING!").center(80, "*")
-        print "Signal names of the provided logfile and the signal description file do not match."
-        print "Please start a new logfile."
-        print ("").center(80, "*")
+        print (("WARNING!").center(80, "*"))
+        print ("Signal names of the provided logfile and the signal description file do not match.")
+        print ("Please start a new logfile.")
+        print (("").center(80, "*"))
         if EnableErrorLog == 1:
                 with open(ErrorLog,'a') as err:
                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Warning! Signal names of actual log file and signal description file do not match.\n")
 #write new header if file is empty
 else:
-    print "New file detected, new header is written."
+    print ("New file detected, new header is written.")
     for n in range(len(lognames)):
         if n == len(lognames)-1:
             output.write(lognames[n] +'\n')
@@ -332,12 +332,12 @@ try:
                 #Hande first state when serial connection is still closed
                 if state == 0:
                         #Prepare everything to start the actual data receiving from serial interface
-                        print ""
-                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Open serial interface " + str(SerialPort)
+                        print ("")
+                        print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Open serial interface " + str(SerialPort))
 
                         try:
                                 ser=serial.Serial(SerialPort, 115200)
-                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Successfully opened."
+                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Successfully opened.")
                                 #clear receiving buffer variables
                                 data = []
                                 ser.flushInput()
@@ -345,9 +345,9 @@ try:
                                 #change state to receiving mode
                                 state = 1
                         except:
-                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Failed to open serial port " + SerialPort + "!"
-                                print "Maybe the serial port is not existing or already in use."
-                                print "Retry in 5 minutes"
+                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Failed to open serial port " + SerialPort + "!")
+                                print ("Maybe the serial port is not existing or already in use.")
+                                print ("Retry in 5 minutes")
                                 if EnableErrorLog == 1:
                                         with open(ErrorLog,'a') as err:
                                                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Faild to open the serial port " + str(SerialPort) + "\n")
@@ -376,20 +376,20 @@ try:
                                                 crc = crc^struct.unpack("B", data[i])[0]
 
                                         if EnableDebug == 1:
-                                                print "Calculated checksum: " +str(crc) + " Expected checksum: " + str(struct.unpack("B", data[-3])[0])
+                                                print ("Calculated checksum: " +str(crc) + " Expected checksum: " + str(struct.unpack("B", data[-3])[0]))
 
                                         #Get sent crc of the WeatherDuino (see layout file) and check with calculated crc
                                         if(struct.unpack("B", data[-3])[0] == crc):
                                                 #if it is true go to state 2
                                                 state = 2
                                                 if EnableDebug == 1:
-                                                        print "Switch to state 2"
+                                                        print ("Switch to state 2")
                                         #Otherwise discard everything and go back to receiving state.
                                         else:
                                                 ErrorCode = 13
                                                 if EnableDebug == 1:                                    
-                                                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": CRC is not matching. (" + str(crc) + "!=" + str(struct.unpack("B", data[-3])[0]) + ")"
-                                                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Actual number of payload bytes:" + str(bytesum-5) + "; Number sent by WeatherDuino:" + str(struct.unpack("H", ''.join(data[-5:-4]))[0])
+                                                        print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": CRC is not matching. (" + str(crc) + "!=" + str(struct.unpack("B", data[-3])[0]) + ")")
+                                                        print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Actual number of payload bytes:" + str(bytesum-5) + "; Number sent by WeatherDuino:" + str(struct.unpack("H", ''.join(data[-5:-4]))[0]))
                                                 if EnableErrorLog == 1:
                                                         with open(ErrorLog,'a') as err:
                                                                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Checksum error.")
@@ -397,12 +397,12 @@ try:
                                                #value = struct.unpack(structformat[x], ''.join(data[pos:(pos+variableLength[x])]))[0]
                                                 #Check if it could be due to wrong bytecount excluding 5 byte overhead
                                                 if((bytecount - 5) != (struct.unpack("H", ''.join(data[-5:-4]))[0])):
-                                                        print ("WARNING!").center(80, "*")
-                                                        print "Expected number of bytes is not matching with byte count sent by WeatherDuino."
-                                                        print str(bytecount) + " != " + str(struct.unpack("H", ''.join(data[-5:-4]))[0])
-                                                        print "Please check the Com_Transmit plugin and the signal description file."
-                                                        print "Continuing makes no sense from this point. Script will exit."
-                                                        print ("").center(80, "*")
+                                                        print (("WARNING!").center(80, "*"))
+                                                        print ("Expected number of bytes is not matching with byte count sent by WeatherDuino.")
+                                                        print (str(bytecount) + " != " + str(struct.unpack("H", ''.join(data[-5:-4]))[0]))
+                                                        print ("Please check the Com_Transmit plugin and the signal description file.")
+                                                        print ("Continuing makes no sense from this point. Script will exit.")
+                                                        print (("").center(80, "*"))
                                                         if EnableErrorLog == 1:
                                                                 with open(ErrorLog,'a') as err:
                                                                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Missmatch of expected and transmitted bytes. Check signal description file and WeatherDuino plugin.\n")
@@ -412,7 +412,7 @@ try:
                                 #Handle if no valid data via serial can be detected then delete buffer and serial input buffer to start again
                                 elif (len(data) > 2*bytesum):
                                         ErrorCode = 14
-                                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Can not detect end sequence of buffer. Skipping and cleaning buffer."
+                                        print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Can not detect end sequence of buffer. Skipping and cleaning buffer.")
                                         if EnableErrorLog == 1:
                                                 with open(ErrorLog,'a') as err:
                                                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Could not detect end sequence of received data.\n")
@@ -425,30 +425,28 @@ try:
 
                                 #Check if there was no logdata sucessfully written since 10 minutes
                                 if (datetime.now()-timebuffer) > timedelta(minutes=10) and EnableMail == 1:
-                                        NotificationFlag = 0
                                         if mailSent == 0:
                                                 try:
 						# call sendmail() and generate a new mail with specified subject and content
                                                         if EnableDebug == 1:
-                                                                print "Sending Email."
+                                                                print ("Sending Email.")
                                                         sendmail(usetls, str(smtppassword),str(smtpusername),str(smtpserver),str(sender),str(receiver),'Wetterstation error',str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) + ' No data is logged since 10 minutes')
                                                         if EnableErrorLog == 1:
                                                                 with open(ErrorLog,'a') as err:
                                                                         err.write (str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) +" Mail sent to " + str(receiver) + "\n")
-                                                        mailSent = 1
+                                                                        mailSent = 1
                                                 except:
                                                         if EnableErrorLog == 1:
                                                                 with open(ErrorLog,'a') as err:
                                                                         err.write (str(datetime.now().strftime("%d.%m.%Y %H:%M:%S")) +" Mail could not be sent. \n")
-                                                        mailSent = 1
+                                                                        mailSent = 1
                                         else:
-                                                if EnableDebug == 1 and NotificationFlag == 0:
-                                                        print "Mail already sent."
-                                                        NotificationFlag = 1
+                                                if EnableDebug == 1:
+                                                        print ("Mail already sent.")
                         except:
                                 #Something has gone wrong probably at receiving data
                                 if EnableDebug == 1:
-                                        print "An error has happened during receiving. Waiting 5 minutes and start over again"
+                                        print ("An error has happened during receiving. Waiting 5 minutes and start over again")
                                 if EnableErrorLog == 1:
                                         with open(ErrorLog,'a') as err:
                                                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error receiving data from serial port. Maybe connection was lost. Error code:" + str(ErrorCode) + "\n")
@@ -458,7 +456,7 @@ try:
                                         ser.close()
                                 except:
                                         if EnableDebug == 1:
-                                                print "Serial interface could not be closed"
+                                                print ("Serial interface could not be closed")
                                 #Start over to state 0 again
                                 state = 0
 
@@ -483,8 +481,8 @@ try:
                         #Check if data in list is valid
                         if len(extraData) != ExtraImportVar and CheckVar == 1:
                                 if EnableDebug == 1:
-                                        print "Warning: Signal count of extra data defined in signal description file and actual signal list are not matching."
-                                        print "Defined signals are " + str(ExtraImportVar) + "! Legth of the signal list is "+ str(len(extraData)) + "!"
+                                        print ("Warning: Signal count of extra data defined in signal description file and actual signal list are not matching.")
+                                        print ("Defined signals are " + str(ExtraImportVar) + "! Legth of the signal list is "+ str(len(extraData)) + "!")
                                 if EnableErrorLog == 1:
                                         with open(ErrorLog,'a') as err:
                                                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Number of extra signals received and extra signals defined does not match.\n")
@@ -494,7 +492,8 @@ try:
                                                                 
                 #State 2 does the signal processing
                 if state == 2:
-                        print "State 2 reached"
+                        if EnableDebug == 1:
+                                print ("State 2 reached")
                         try:
                                 #Recover signals of byte array
                                 pos = 0
@@ -553,7 +552,7 @@ try:
                                                         #allsignals[names.index('Rain_TX0')] = None
                                                         #allsignals[names.index('Rain_Rate_TX0')] = None
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX0 detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX0 detected")
                                                 position = 0
                                                         
                                                 #Do filtering for TX1
@@ -569,7 +568,7 @@ try:
                                                         #allsignals[names.index('Rain_TX1')] = None
                                                         #allsignals[names.index('Rain_Rate_TX1')] = None
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX1 detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX1 detected")
                                                 position = 1                                              
                                                         
                                                 #Do filtering for TX2
@@ -585,7 +584,7 @@ try:
                                                         #allsignals[names.index('Rain_TX2')] = None
                                                         #allsignals[names.index('Rain_Rate_TX2')] = None
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX2 detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX2 detected")
                                                 position = 2
                                                         
                                                 #Do filtering for TX3
@@ -601,19 +600,20 @@ try:
                                                         #allsignals[names.index('Rain_TX3')] = None
                                                         #allsignals[names.index('Rain_Rate_TX3')] = None
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX3 detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for TX3 detected")
                                                 position = 3
 
                                                 #Do filtering for AQM check if AQI or CO2 is 0
                                                 if allsignals[names.index('AQM_Index')] == 0 or allsignals[names.index('GAS_1')] == 0 or (allsignals[names.index('AQM_Temp')] == 0 and allsignals[names.index('AQM_Hum')] == 0):
                                                         IndStart = names.index('AQM_PM1_0')
                                                         IndEnd = names.index('GAS_2')+1 #Go one index ahead, that the last value is also changed
+                                                        print(allsignals[IndStart:IndEnd])
                                                         #Create an list of Nones
                                                         NoneBuf = [None] * (IndEnd-IndStart)
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for AQM detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for AQM detected")
                                                 position = 4
 
                                                 #Do filtering for Soil / Leaf - check two soil temperatures since is very unlikely that both are 0.0 (if you have only one sensor installed it might happen that good data is cut out
@@ -625,7 +625,7 @@ try:
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for Soil/Leaf detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for Soil/Leaf detected")
                                                 position = 5
 
                                                 #Do filtering for WD0
@@ -637,7 +637,7 @@ try:
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD0 detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD0 detected")
                                                 position = 6
 
                                                 #Do filtering for WD1
@@ -649,7 +649,7 @@ try:
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD1 detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD1 detected")
                                                 position = 7
 
                                                 #Do filtering for WD2
@@ -661,7 +661,7 @@ try:
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD2 detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD2 detected")
                                                 position = 8
 
                                                 #Do filtering for WD3
@@ -673,12 +673,12 @@ try:
                                                         #Copy the Nones onto the corresponding listentries which are not valid
                                                         allsignals[IndStart:IndEnd] = NoneBuf
                                                         if EnableDebug == 1:
-                                                                print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD3 detected"
+                                                                print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " None valid data for WD3 detected")
                                                 position = 9
                                                                 
                                 except:
                                                 if EnableDebug == 1:
-                                                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during validy check of data at position " + str(position) +"."
+                                                        print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during validy check of data at position " + str(position) +".")
 
                                                 if EnableErrorLog == 1:
                                                         with open(ErrorLog,'a') as err:
@@ -803,8 +803,8 @@ try:
                                                         
                                         except:
                                                 if EnableDebug == 1:
-                                                        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error in calculation formula at position " + str(formulaError)
-                                                        print "Signal type has to be calc or import"
+                                                        print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error in calculation formula at position " + str(formulaError))
+                                                        print ("Signal type has to be calc or import")
                                                 if EnableErrorLog == 1:
                                                         with open(ErrorLog,'a') as err:
                                                                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error in calculation formula " + str(formulaError) + "\n")
@@ -843,8 +843,8 @@ try:
                                                 else:
                                                         signals.append(None)
                                                         if EnableDebug == 1:
-                                                                print "Warning: problem merging all extra signals."
-                                                                print "Signal type has to be calc or import"
+                                                                print ("Warning: problem merging all extra signals.")
+                                                                print ("Signal type has to be calc or import")
                                                         if EnableErrorLog == 1:
                                                                 with open(ErrorLog,'a') as err:
                                                                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Wrong signal type of extra data detected.\n")
@@ -853,20 +853,20 @@ try:
 
                                 #Print data if console output is enabled
                                 if EnableConsole == 1:
-                                        print ("").center(80, "-")
+                                        print (("").center(80, "-"))
                                         for i in range(len(lognames)):
-                                                print lognames[i] + ':' + (str(signals[i])).rjust(30-len(lognames[i])) + ' ' + logunits[i]
+                                                print (lognames[i] + ':' + (str(signals[i])).rjust(30-len(lognames[i])) + ' ' + logunits[i])
                                 if EnableDebug == 1:
-                                        print "Actual timestamp:" + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + "; Timestamp at sending:" + str(signals[0])
+                                        print ("Actual timestamp:" + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + "; Timestamp at sending:" + str(signals[0]))
                                 #Empty data buffer
                                 data = []
                                 #Go to next state where everything is beeing logged
                                 state = 3
                         except:
                                 if EnableDebug == 1:
-                                        print "Something has gone wrong at signal processing this should not be happening."
-                                        print "Check your layout file carefully"
-                                        print "Trying to start over to receiving state again"
+                                        print ("Something has gone wrong at signal processing this should not be happening.")
+                                        print ("Check your layout file carefully")
+                                        print ("Trying to start over to receiving state again")
                                 if EnableErrorLog == 1:
                                         with open(ErrorLog,'a') as err:
                                                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during signal processing.\n")
@@ -932,9 +932,9 @@ try:
 
                                         except:
                                                 #If writing with open logfile is not possible strange things are happening and the layout file might be wrong.
-                                                print "Something has gone during writing because signal values, signal names or signal factors are mismatching."
-                                                print "Continuing makes no sense from this point."
-                                                print "Exiting."
+                                                print ("Something has gone during writing because signal values, signal names or signal factors are mismatching.")
+                                                print ("Continuing makes no sense from this point.")
+                                                print ("Exiting.")
                                                 if EnableErrorLog == 1:
                                                         with open(ErrorLog,'a') as err:
                                                                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error during signal writing.\n")
@@ -979,7 +979,7 @@ try:
                                                                                 export.write(str(exp_signals[i]) + ';')                                                               
                                 except:
                                         if EnableDebug == 1:
-                                                print "Error writing WeeWx export"
+                                                print ("Error writing WeeWx export")
                                         if EnableErrorLog == 1:
                                                 with open(ErrorLog,'a') as err:
                                                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error writing the WeeWx export file.\n")
@@ -991,7 +991,7 @@ try:
                                 
                         except:
                                 if EnableDebug == 1:
-                                        print "File could not be opened trying to write again in 10 seconds."
+                                        print ("File could not be opened trying to write again in 10 seconds.")
                                 if EnableErrorLog == 1:
                                         with open(ErrorLog,'a') as err:
                                                 err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Error opening the log file.\n")
@@ -999,7 +999,7 @@ try:
 
 except KeyboardInterrupt:
         ser.close()
-        print str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Logging stopped and serial port closed."
+        print (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ": Logging stopped and serial port closed.")
         if EnableErrorLog == 1:
                 with open(ErrorLog,'a') as err:
                         err.write (str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Script ended with keystroke.\n")

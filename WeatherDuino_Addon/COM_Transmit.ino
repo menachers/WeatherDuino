@@ -105,10 +105,10 @@ void Com_Transmit() {
     }
   }
   //Write variables of AQM
-  VarPtr = (byte*) &AQI_Monitor;
-  Serial3.write(VarPtr, sizeof(AQI_Monitor));
+  VarPtr = (byte*) &AQ_Monitor;
+  Serial3.write(VarPtr, sizeof(AQ_Monitor));
   //Calculate checksum
-  for (uint8_t i = 0; i < (sizeof(AQI_Monitor)); i++) {
+  for (uint8_t i = 0; i < (sizeof(AQ_Monitor)); i++) {
     TransmitCRC = TransmitCRC ^ (*VarPtr);
     VarPtr++;
     SumBytes ++;
