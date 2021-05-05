@@ -58,30 +58,28 @@ for n in range(len(names)-1):
 #weewx.units.obs_group_dict['rain_RG11'] = 'group_rain'
 #logdbg(Unit " + 'group_rain' + " attached to signal " + 'rain_RG11')
 
-#if you also have the plugin for the lightning sensor installed
-weewx.units.obs_group_dict['lightning_strikes'] = 'group_count'
-weewx.units.obs_group_dict['avg_distance'] = 'group_distance'
-    
-weewx.units.USUnits['group_gas_concentration'] = 'ppm'
-weewx.units.MetricUnits['group_gas_concentration'] = 'ppm'
-weewx.units.MetricWXUnits['group_gas_concentration'] = 'ppm'
-weewx.units.default_unit_format_dict['ppm']  = '%.0f'
-weewx.units.default_unit_label_dict['ppm']  = ' ppm'
-
-weewx.units.USUnits['group_dust'] = 'microgramm_per_meter_cubic'
-weewx.units.MetricUnits['group_dust'] = 'microgramm_per_meter_cubic'
-weewx.units.MetricWXUnits['group_dust'] = 'microgramm_per_meter_cubic'
-weewx.units.default_unit_format_dict['microgramm_per_meter_cubic']  = '%.1f'
 if version == 3:
-    weewx.units.default_unit_label_dict['microgramm_per_meter_cubic']  = ' \xce\xbcg/m\xc2\xb3'
-else:
-    weewx.units.default_unit_label_dict['microgramm_per_meter_cubic']  = ' µg/m³'
+    #if you also have the plugin for the lightning sensor installed
+    weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
+    weewx.units.obs_group_dict['lightning_distance'] = 'group_distance'
+        
+    weewx.units.USUnits['group_fraction'] = 'ppm'
+    weewx.units.MetricUnits['group_fraction'] = 'ppm'
+    weewx.units.MetricWXUnits['group_fraction'] = 'ppm'
+    weewx.units.default_unit_format_dict['ppm']  = '%.0f'
+    weewx.units.default_unit_label_dict['ppm']  = ' ppm'
 
-weewx.units.USUnits['group_illumination'] = 'lux'
-weewx.units.MetricUnits['group_illumination'] = 'lux'
-weewx.units.MetricWXUnits['group_illumination'] = 'lux'
-weewx.units.default_unit_format_dict['lux']  = '%.0f'
-weewx.units.default_unit_label_dict['lux']  = ' lux'
+    weewx.units.USUnits['group_concentration'] = 'microgram_per_meter_cubed'
+    weewx.units.MetricUnits['group_concentration'] = 'microgram_per_meter_cubed'
+    weewx.units.MetricWXUnits['group_concentration'] = 'microgram_per_meter_cubed'
+    weewx.units.default_unit_format_dict['microgram_per_meter_cubed']  = '%.1f'
+    weewx.units.default_unit_label_dict['microgram_per_meter_cubed']  = ' \xce\xbcg/m\xc2\xb3'
+
+    weewx.units.USUnits['group_illuminance'] = 'lux'
+    weewx.units.MetricUnits['group_illuminance'] = 'lux'
+    weewx.units.MetricWXUnits['group_illuminance'] = 'lux'
+    weewx.units.default_unit_format_dict['lux']  = '%.0f'
+    weewx.units.default_unit_label_dict['lux']  = ' lux'
 
 ####################################################################################
 
@@ -188,9 +186,11 @@ class WeeWxService(StdService):
                         else:
                             event.record[str(names[n+1])] = None
                             
+                loginf("Augmented record with timestamp " + str(archive_dt))
+                            
             #Else throw an exception that the data is too old
             else:
-                logerr("Data is too old. Check logging addon!")
+                logerr("Timestamp of augmented data is " + str(dt) + ". Timestamp of actual record is " + str(archive_dt) + ". This is too old and nothing is done. Check logging addon!")
 
         except(Exception):
             if error_ind >= 0:
@@ -211,5 +211,6 @@ schema_WeatherDuino = schemas.wview.schema
 for n in range(len(names)-1):
 	schema_WeatherDuino = schema_WeatherDuino + [(str(names[n+1]), 'REAL')]
 #if you also have the plugin for the lightning sensor installed
-schema_WeatherDuino = schema_WeatherDuino + [('lightning_strikes', 'REAL')]
-schema_WeatherDuino = schema_WeatherDuino + [('avg_distance', 'REAL')]
+if version == 3:
+    schema_WeatherDuino = schema_WeatherDuino + [('lightning_strike_count', 'REAL')]
+    schema_WeatherDuino = schema_WeatherDuino + [('lightning_distance', 'REAL')]
