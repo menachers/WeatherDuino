@@ -132,7 +132,7 @@ class WeeWxService(StdService):
 
                    
                     #Convert transmitted total rain value to rain delta since last WeeWx import
-                    if units[n+1] == 'group_rain':
+                    if units[n+1] == 'group_rain' and names[n+1] != 'snowDepth':
                         #Check if the safe file contains enough entries
                         if rainind < len(self.last_rain):
                             #if yes calculate the rain difference and store the new rain value into the buffer
@@ -186,7 +186,7 @@ class WeeWxService(StdService):
                         else:
                             event.record[str(names[n+1])] = None
                             
-                loginf("Augmented record with timestamp " + str(archive_dt))
+                #loginf("Augmented record with timestamp " + str(archive_dt))
                             
             #Else throw an exception that the data is too old
             else:
